@@ -1,4 +1,4 @@
-// Fase 2 — Cobrança: mensalidades recorrentes + conciliação bancária
+// Fase 2 — Cobrança: mensalidades recorrentes + conciliação bancária (v2)
 migrate(
   (app) => {
     var matriculasId = app.findCollectionByNameOrId('matriculas').id

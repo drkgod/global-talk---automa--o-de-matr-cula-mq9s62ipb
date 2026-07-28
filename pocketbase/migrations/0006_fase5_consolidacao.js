@@ -1,4 +1,4 @@
-// Fase 5 — Consolidação
+// Fase 5 — Consolidação (v2)
 migrate(
   (app) => {
     var metricas = new Collection({

@@ -1,4 +1,4 @@
-// Fase 4 — Inadimplência
+// Fase 4 — Inadimplência (v2)
 migrate(
   (app) => {
     var matriculasId = app.findCollectionByNameOrId('matriculas').id

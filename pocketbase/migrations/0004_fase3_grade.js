@@ -1,4 +1,4 @@
-// Fase 3 — Grade de horários: professores, grade semanal, alocações
+// Fase 3 — Grade de horários: professores, grade semanal, alocações (v2)
 migrate(
   (app) => {
     var turmasId = app.findCollectionByNameOrId('turmas').id

@@ -1,7 +1,6 @@
 // Fase 5 — Consolidação: capacitação, reset IA, métricas finais e handoff
 migrate(
   (app) => {
-    // --- treinamentos: trilhas de capacitação por papel (SPEC-5-001) ---
     var treinamentos = new Collection({
       name: 'treinamentos',
       type: 'base',
@@ -51,7 +50,6 @@ migrate(
     })
     app.save(treinamentos)
 
-    // --- reset_ia: comunicação formal sobre ausência de IA (SPEC-5-002) ---
     var resetIa = new Collection({
       name: 'reset_ia',
       type: 'base',
@@ -83,7 +81,6 @@ migrate(
     })
     app.save(resetIa)
 
-    // --- metricas_finais: medições antes/depois (SPEC-5-003) ---
     var metricas = new Collection({
       name: 'metricas_finais',
       type: 'base',
@@ -126,7 +123,6 @@ migrate(
     })
     app.save(metricas)
 
-    // --- handoff: recibo de handoff do projeto (SPEC-5-003) ---
     var handoff = new Collection({
       name: 'handoff',
       type: 'base',

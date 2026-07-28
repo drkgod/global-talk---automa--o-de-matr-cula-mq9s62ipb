@@ -10,7 +10,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Input, Label } from '@/components/ui/input'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
 import { Calendar, Users, AlertTriangle, Loader2 } from 'lucide-react'
 import pb from '@/lib/pocketbase/client'
@@ -46,9 +47,11 @@ const PainelGrade = () => {
         method: 'POST',
         body: { semana_inicio: semanaInicio },
       })
-      res.total_conflitos > 0
-        ? toast.warning(`${res.total_conflitos} conflito(s)`)
-        : toast.success('Grade gerada!')
+      if (res.total_conflitos > 0) {
+        toast.warning(`${res.total_conflitos} conflito(s)`)
+      } else {
+        toast.success('Grade gerada!')
+      }
       carregar()
     } catch (err: any) {
       toast.error(err.response?.erro || err.message)

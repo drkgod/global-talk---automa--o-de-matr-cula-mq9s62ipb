@@ -1,4 +1,4 @@
-// Fase 4 — Escalonamento de inadimplência, renegociação, decisão SchoolManager
+// Fase 4 — Inadimplência
 migrate(
   (app) => {
     var matriculasId = app.findCollectionByNameOrId('matriculas').id
@@ -35,28 +35,20 @@ migrate(
           name: 'nivel_escalonamento',
           type: 'select',
           required: true,
-          values: ['cobranca_inicial', 'reenvio_3d', 'escala_15d_diretoria'],
+          values: ['lembrete', 'notificacao', 'bloqueio', 'renegociacao'],
           maxSelect: 1,
         },
         {
           name: 'status',
           type: 'select',
           required: true,
-          values: ['ativo', 'pago_durante_fluxo', 'escalado_diretoria', 'renegociado', 'encerrado'],
+          values: ['ativo', 'resolvido', 'renegociado', 'encaminhado_diretoria'],
           maxSelect: 1,
         },
-        { name: 'data_cobranca_inicial', type: 'date' },
-        { name: 'data_reenvio', type: 'date' },
-        { name: 'data_escala_diretoria', type: 'date' },
         { name: 'data_resolucao', type: 'date' },
         { name: 'observacao', type: 'text' },
-        { name: 'created', type: 'autodate', required: false, autodateTriggers: ['onCreate'] },
-        {
-          name: 'updated',
-          type: 'autodate',
-          required: false,
-          autodateTriggers: ['onCreate', 'onUpdate'],
-        },
+        { name: 'created', type: 'autodate', onCreate: true },
+        { name: 'updated', type: 'autodate', onCreate: true, onUpdate: true },
       ],
       indexes: [
         'CREATE INDEX idx_inadimp_matricula ON inadimplencia (matricula_id)',
@@ -65,7 +57,6 @@ migrate(
       ],
     })
     app.save(inadimplencia)
-    var inadimplenciaId = inadimplencia.id
 
     var acoes = new Collection({
       name: 'acoes_cobranca',
@@ -80,7 +71,7 @@ migrate(
           name: 'inadimplencia_id',
           type: 'relation',
           required: true,
-          collectionId: inadimplenciaId,
+          collectionId: inadimplencia.id,
           maxSelect: 1,
           cascadeDelete: true,
         },
@@ -88,21 +79,21 @@ migrate(
           name: 'tipo_acao',
           type: 'select',
           required: true,
-          values: ['cobranca_inicial', 'reenvio_3d', 'escala_diretoria'],
+          values: [
+            'lembrete_email',
+            'lembrete_sms',
+            'notificacao_sistema',
+            'bloqueio_acesso',
+            'convocacao_diretoria',
+            'proposta_renegociacao',
+          ],
           maxSelect: 1,
         },
         { name: 'descricao', type: 'text', required: true },
-        { name: 'data_execucao', type: 'date', required: true },
         { name: 'executada', type: 'bool' },
         { name: 'resultado', type: 'text' },
-        { name: 'erro_mensagem', type: 'text' },
-        { name: 'created', type: 'autodate', required: false, autodateTriggers: ['onCreate'] },
-        {
-          name: 'updated',
-          type: 'autodate',
-          required: false,
-          autodateTriggers: ['onCreate', 'onUpdate'],
-        },
+        { name: 'created', type: 'autodate', onCreate: true },
+        { name: 'updated', type: 'autodate', onCreate: true, onUpdate: true },
       ],
       indexes: [
         'CREATE INDEX idx_acoes_inadimp ON acoes_cobranca (inadimplencia_id)',
@@ -110,90 +101,9 @@ migrate(
       ],
     })
     app.save(acoes)
-
-    var renegociacoes = new Collection({
-      name: 'renegociacoes',
-      type: 'base',
-      listRule: "@request.auth.id != ''",
-      viewRule: "@request.auth.id != ''",
-      createRule: "@request.auth.id != ''",
-      updateRule: "@request.auth.id != ''",
-      deleteRule: "@request.auth.id != ''",
-      fields: [
-        {
-          name: 'inadimplencia_id',
-          type: 'relation',
-          required: true,
-          collectionId: inadimplenciaId,
-          maxSelect: 1,
-          cascadeDelete: true,
-        },
-        { name: 'motivo', type: 'text', required: true },
-        { name: 'valor_original', type: 'number', required: true, min: 0 },
-        { name: 'valor_negociado', type: 'number', required: true, min: 0 },
-        { name: 'novo_prazo', type: 'date', required: true },
-        {
-          name: 'status',
-          type: 'select',
-          required: true,
-          values: ['proposta', 'aprovada', 'recusada', 'cancelada'],
-          maxSelect: 1,
-        },
-        { name: 'aprovador', type: 'text' },
-        { name: 'data_aprovacao', type: 'date' },
-        { name: 'observacao', type: 'text' },
-        { name: 'created', type: 'autodate', required: false, autodateTriggers: ['onCreate'] },
-        {
-          name: 'updated',
-          type: 'autodate',
-          required: false,
-          autodateTriggers: ['onCreate', 'onUpdate'],
-        },
-      ],
-      indexes: [
-        'CREATE INDEX idx_reneg_inadimp ON renegociacoes (inadimplencia_id)',
-        'CREATE INDEX idx_reneg_status ON renegociacoes (status)',
-      ],
-    })
-    app.save(renegociacoes)
-
-    var decisao = new Collection({
-      name: 'decisao_schoolmanager',
-      type: 'base',
-      listRule: "@request.auth.id != ''",
-      viewRule: "@request.auth.id != ''",
-      createRule: "@request.auth.id != ''",
-      updateRule: "@request.auth.id != ''",
-      deleteRule: "@request.auth.id != ''",
-      fields: [
-        {
-          name: 'decisao',
-          type: 'select',
-          required: true,
-          values: ['manter_lote', 'api_direta', 'contingencia_interna', 'pendente'],
-          maxSelect: 1,
-        },
-        { name: 'justificativa', type: 'text', required: true },
-        { name: 'evidencia_spike', type: 'text' },
-        { name: 'criterios_atendidos', type: 'text' },
-        { name: 'impacto', type: 'text' },
-        { name: 'responsavel', type: 'text' },
-        { name: 'plano_rollback', type: 'text' },
-        { name: 'data_decisao', type: 'date' },
-        { name: 'created', type: 'autodate', required: false, autodateTriggers: ['onCreate'] },
-        {
-          name: 'updated',
-          type: 'autodate',
-          required: false,
-          autodateTriggers: ['onCreate', 'onUpdate'],
-        },
-      ],
-      indexes: ['CREATE INDEX idx_decisao_sm ON decisao_schoolmanager (decisao)'],
-    })
-    app.save(decisao)
   },
   (app) => {
-    var names = ['decisao_schoolmanager', 'renegociacoes', 'acoes_cobranca', 'inadimplencia']
+    var names = ['acoes_cobranca', 'inadimplencia']
     for (var i = 0; i < names.length; i++) {
       try {
         app.delete(app.findCollectionByNameOrId(names[i]))

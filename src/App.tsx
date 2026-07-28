@@ -6,6 +6,10 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import Index from './pages/Index'
 import MatriculaWizard from './pages/MatriculaWizard'
 import CoordenadoraPainel from './pages/CoordenadoraPainel'
+import PainelFinanceiro from './pages/PainelFinanceiro'
+import PainelGrade from './pages/PainelGrade'
+import PainelInadimplencia from './pages/PainelInadimplencia'
+import PainelConsolidacao from './pages/PainelConsolidacao'
 import PainelFases from './pages/PainelFases'
 import NotFound from './pages/NotFound'
 import Layout from './components/Layout'
@@ -20,6 +24,10 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/matricula" element={<MatriculaWizard />} />
           <Route path="/coordenadora" element={<CoordenadoraPainel />} />
+          <Route path="/financeiro" element={<PainelFinanceiro />} />
+          <Route path="/grade" element={<PainelGrade />} />
+          <Route path="/inadimplencia" element={<PainelInadimplencia />} />
+          <Route path="/consolidacao" element={<PainelConsolidacao />} />
           <Route path="/fases" element={<PainelFases />} />
         </Route>
         <Route path="*" element={<NotFound />} />

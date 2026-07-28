@@ -2,8 +2,8 @@
 migrate(
   (app) => {
     // --- Professores ---
-    const profCol = app.findCollectionByNameOrId('professores')
-    const profsData = [
+    var profCol = app.findCollectionByNameOrId('professores')
+    var profsData = [
       {
         nome: 'Maria Silva',
         email: 'maria.silva@globaltalk.com.br',
@@ -40,14 +40,15 @@ migrate(
         ativo: true,
       },
     ]
-    profsData.forEach(function (p) {
+    for (var i = 0; i < profsData.length; i++) {
+      var p = profsData[i]
       try {
         app.findFirstRecordByData('professores', 'nome', p.nome)
-        return // já existe
+        continue // ja existe
       } catch (_) {
         /* ok */
       }
-      const rec = new Record(profCol)
+      var rec = new Record(profCol)
       rec.set('nome', p.nome)
       rec.set('email', p.email)
       rec.set('telefone', p.telefone)
@@ -58,11 +59,11 @@ migrate(
         JSON.stringify({ dias: ['segunda', 'terca', 'quarta', 'quinta', 'sexta'] }),
       )
       app.save(rec)
-    })
+    }
 
     // --- Métricas do projeto ---
-    const metCol = app.findCollectionByNameOrId('metricas')
-    const metricasData = [
+    var metCol = app.findCollectionByNameOrId('metricas')
+    var metricasData = [
       {
         nome: 'Tempo médio de matrícula',
         valor: 12,
@@ -172,27 +173,28 @@ migrate(
         observacao: 'Em finalização',
       },
     ]
-    metricasData.forEach(function (m) {
+    for (var j = 0; j < metricasData.length; j++) {
+      var m = metricasData[j]
       try {
         app.findFirstRecordByData('metricas', 'nome', m.nome)
-        return
+        continue
       } catch (_) {
         /* ok */
       }
-      const rec = new Record(metCol)
-      rec.set('nome', m.nome)
-      rec.set('valor', m.valor)
-      rec.set('unidade', m.unidade)
-      rec.set('meta', m.meta)
-      rec.set('status', m.status)
-      rec.set('fase', m.fase)
-      rec.set('observacao', m.observacao)
-      app.save(rec)
-    })
+      var mrec = new Record(metCol)
+      mrec.set('nome', m.nome)
+      mrec.set('valor', m.valor)
+      mrec.set('unidade', m.unidade)
+      mrec.set('meta', m.meta)
+      mrec.set('status', m.status)
+      mrec.set('fase', m.fase)
+      mrec.set('observacao', m.observacao)
+      app.save(mrec)
+    }
 
     // --- Treinamentos ---
-    const treinCol = app.findCollectionByNameOrId('treinamentos')
-    const treinsData = [
+    var treinCol = app.findCollectionByNameOrId('treinamentos')
+    var treinsData = [
       {
         funcionario: 'Luiza',
         papel: 'atendente',
@@ -222,21 +224,22 @@ migrate(
         status: 'agendado',
       },
     ]
-    treinsData.forEach(function (t) {
+    for (var k = 0; k < treinsData.length; k++) {
+      var t = treinsData[k]
       try {
         app.findFirstRecordByData('treinamentos', 'funcionario', t.funcionario)
-        return
+        continue
       } catch (_) {
         /* ok */
       }
-      const rec = new Record(treinCol)
-      rec.set('funcionario', t.funcionario)
-      rec.set('papel', t.papel)
-      rec.set('topico', t.topico)
-      rec.set('data_treinamento', t.data)
-      rec.set('status', t.status)
-      app.save(rec)
-    })
+      var trec = new Record(treinCol)
+      trec.set('funcionario', t.funcionario)
+      trec.set('papel', t.papel)
+      trec.set('topico', t.topico)
+      trec.set('data_treinamento', t.data)
+      trec.set('status', t.status)
+      app.save(trec)
+    }
   },
   (app) => {
     try {

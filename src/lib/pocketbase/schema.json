@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-28T17:54:12.271Z",
+  "generatedAt": "2026-07-28T17:59:58.134Z",
   "collections": [
     {
       "name": "users",
@@ -29,19 +29,682 @@
           "type": "autodate",
           "required": false,
           "system": false,
-          "autodateTriggers": ["onCreate"]
+          "autodateTriggers": [
+            "onCreate"
+          ]
         },
         {
           "name": "updated",
           "type": "autodate",
           "required": false,
           "system": false,
-          "autodateTriggers": ["onCreate", "onUpdate"]
+          "autodateTriggers": [
+            "onCreate",
+            "onUpdate"
+          ]
         }
       ],
       "indexes": [
         "CREATE UNIQUE INDEX `idx_tokenKey__pb_users_auth_` ON `users` (`tokenKey`)",
         "CREATE UNIQUE INDEX `idx_email__pb_users_auth_` ON `users` (`email`) WHERE `email` != ''"
+      ]
+    },
+    {
+      "name": "turmas",
+      "type": "base",
+      "apiRules": {
+        "list": "",
+        "view": "",
+        "create": "@request.auth.id != ''",
+        "update": "@request.auth.id != ''",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "nivel",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": [
+            "basico",
+            "intermediario",
+            "avancado"
+          ]
+        },
+        {
+          "name": "curso",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "horario",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "vagas_total",
+          "type": "number",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "vagas_disponiveis",
+          "type": "number",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": [
+            "onCreate"
+          ]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": [
+            "onCreate",
+            "onUpdate"
+          ]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_turmas_nivel ON turmas (nivel)",
+        "CREATE INDEX idx_turmas_curso_horario ON turmas (curso, horario)"
+      ]
+    },
+    {
+      "name": "matriculas",
+      "type": "base",
+      "apiRules": {
+        "list": "",
+        "view": "",
+        "create": "",
+        "update": "",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "sessao_id",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "nome",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "cpf",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "endereco",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "telefone",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "curso_pretendido",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "horario_pretendido",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": [
+            "rascunho",
+            "formulario_concluido",
+            "prova_concluida",
+            "pendente",
+            "ativo"
+          ]
+        },
+        {
+          "name": "nivel",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": [
+            "basico",
+            "intermediario",
+            "avancado"
+          ]
+        },
+        {
+          "name": "turma_id",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "turmas"
+        },
+        {
+          "name": "horario_alternativo_oferecido",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "valor_matricula",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": [
+            "onCreate"
+          ]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": [
+            "onCreate",
+            "onUpdate"
+          ]
+        }
+      ],
+      "indexes": [
+        "CREATE UNIQUE INDEX idx_matriculas_cpf ON matriculas (cpf) WHERE cpf IS NOT NULL AND cpf != ''",
+        "CREATE INDEX idx_matriculas_sessao ON matriculas (sessao_id)",
+        "CREATE INDEX idx_matriculas_status ON matriculas (status)"
+      ]
+    },
+    {
+      "name": "questoes_prova",
+      "type": "base",
+      "apiRules": {
+        "list": "",
+        "view": "",
+        "create": "@request.auth.id != ''",
+        "update": "@request.auth.id != ''",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "ordem",
+          "type": "number",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "enunciado",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "opcao_a",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "opcao_b",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "opcao_c",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "opcao_d",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "resposta_correta",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": [
+            "a",
+            "b",
+            "c",
+            "d"
+          ]
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": [
+            "onCreate"
+          ]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": [
+            "onCreate",
+            "onUpdate"
+          ]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_questoes_ordem ON questoes_prova (ordem)"
+      ]
+    },
+    {
+      "name": "prova_respostas",
+      "type": "base",
+      "apiRules": {
+        "list": "",
+        "view": "",
+        "create": "",
+        "update": "",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "matricula_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "matriculas"
+        },
+        {
+          "name": "questao_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "questoes_prova"
+        },
+        {
+          "name": "resposta",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": [
+            "a",
+            "b",
+            "c",
+            "d"
+          ]
+        },
+        {
+          "name": "acertou",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": [
+            "onCreate"
+          ]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": [
+            "onCreate",
+            "onUpdate"
+          ]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_prova_respostas_matricula ON prova_respostas (matricula_id)"
+      ]
+    },
+    {
+      "name": "pacotes_importacao",
+      "type": "base",
+      "apiRules": {
+        "list": "",
+        "view": "",
+        "create": "",
+        "update": "",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "matricula_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "matriculas"
+        },
+        {
+          "name": "dados_json",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": [
+            "gerado",
+            "enviado",
+            "confirmado",
+            "falha",
+            "retido"
+          ]
+        },
+        {
+          "name": "erro_mensagem",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "tentativas",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": [
+            "onCreate"
+          ]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": [
+            "onCreate",
+            "onUpdate"
+          ]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_pacotes_matricula ON pacotes_importacao (matricula_id)",
+        "CREATE INDEX idx_pacotes_status ON pacotes_importacao (status)"
+      ]
+    },
+    {
+      "name": "contratos",
+      "type": "base",
+      "apiRules": {
+        "list": "",
+        "view": "",
+        "create": "",
+        "update": "",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "matricula_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "matriculas"
+        },
+        {
+          "name": "pdf_conteudo",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "gerado",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "erro_mensagem",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "excecao_template",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": [
+            "onCreate"
+          ]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": [
+            "onCreate",
+            "onUpdate"
+          ]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_contratos_matricula ON contratos (matricula_id)"
+      ]
+    },
+    {
+      "name": "pagamentos",
+      "type": "base",
+      "apiRules": {
+        "list": "",
+        "view": "",
+        "create": "@request.auth.id != ''",
+        "update": "@request.auth.id != ''",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "matricula_id",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "matriculas"
+        },
+        {
+          "name": "valor_esperado",
+          "type": "number",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "valor_pago",
+          "type": "number",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "nome_pagador",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "data_pagamento",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": [
+            "identificado",
+            "divergente",
+            "parcial",
+            "manual"
+          ]
+        },
+        {
+          "name": "divergencia_nome",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "nota_divergencia",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": [
+            "onCreate"
+          ]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": [
+            "onCreate",
+            "onUpdate"
+          ]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_pagamentos_matricula ON pagamentos (matricula_id)",
+        "CREATE INDEX idx_pagamentos_status ON pagamentos (status)"
+      ]
+    },
+    {
+      "name": "notificacoes_coordenadora",
+      "type": "base",
+      "apiRules": {
+        "list": "",
+        "view": "",
+        "create": "@request.auth.id != ''",
+        "update": "@request.auth.id != ''",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "matricula_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "matriculas"
+        },
+        {
+          "name": "nome_aluno",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "nivel",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": [
+            "basico",
+            "intermediario",
+            "avancado"
+          ]
+        },
+        {
+          "name": "curso",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "horario_pretendido",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "lida",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "erro_criacao",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": [
+            "onCreate"
+          ]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": [
+            "onCreate",
+            "onUpdate"
+          ]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_notificacoes_lida ON notificacoes_coordenadora (lida)",
+        "CREATE INDEX idx_notificacoes_created ON notificacoes_coordenadora (created DESC)"
       ]
     }
   ]

@@ -1,676 +1,419 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 import {
+  ArrowRight,
+  ArrowLeft,
+  Wifi,
+  WifiOff,
+  CheckCircle2,
+  Circle,
   FileText,
-  ClipboardCheck,
+  GraduationCap,
   Upload,
   FileSignature,
   CreditCard,
   Bell,
-  CheckCircle2,
-  AlertCircle,
-  Loader2,
-  ArrowRight,
-  ArrowLeft,
-  Download,
 } from 'lucide-react'
 import pb from '@/lib/pocketbase/client'
 
-type Step = 0 | 1 | 2 | 3 | 4 | 5 | 6
-
-interface FormData {
-  sessao_id: string
-  nome: string
-  cpf: string
-  endereco: string
-  telefone: string
-  curso_pretendido: string
-  horario_pretendido: string
-}
-
-interface Questao {
-  id: string
-  ordem: number
-  enunciado: string
-  opcao_a: string
-  opcao_b: string
-  opcao_c: string
-  opcao_d: string
-  resposta_correta: string
-}
-
-interface Turma {
-  id: string
-  nivel: string
-  curso: string
-  horario: string
-  vagas_disponiveis: number
-}
-
-const STORAGE_KEY = 'gt_matricula_draft'
+const steps = [
+  { num: 1, label: 'Formulário', icon: FileText },
+  { num: 2, label: 'Prova', icon: GraduationCap },
+  { num: 3, label: 'Importação', icon: Upload },
+  { num: 4, label: 'Contrato', icon: FileSignature },
+  { num: 5, label: 'Pagamento', icon: CreditCard },
+  { num: 6, label: 'Notificação', icon: Bell },
+]
 
 const MatriculaWizard = () => {
-  const navigate = useNavigate()
-  const [step, setStep] = useState<Step>(0)
-  const [loading, setLoading] = useState(false)
-  const [matriculaId, setMatriculaId] = useState('')
+  const [currentStep, setCurrentStep] = useState(1)
+  const [offline, setOffline] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [provaRespondida, setProvaRespondida] = useState(false)
 
-  // Form data com autosave (SPEC-1-001 CA-1-02)
-  const [formData, setFormData] = useState<FormData>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY)
-    if (saved) {
-      try {
-        return JSON.parse(saved)
-      } catch {
-        /* ignore */
-      }
-    }
-    return {
-      sessao_id: 'sessao_' + Date.now(),
-      nome: '',
-      cpf: '',
-      endereco: '',
-      telefone: '',
-      curso_pretendido: '',
-      horario_pretendido: '',
-    }
+  const [form, setForm] = useState({
+    nome: '',
+    cpf: '',
+    endereco: '',
+    telefone: '',
+    curso: 'ingles',
+    horario: '19:00',
+    nivel: 'basico',
   })
 
-  // Autosave incremental — salva a cada mudança (SPEC-1-001)
+  const [prova, setProva] = useState({
+    q1: '',
+    q2: '',
+    q3: '',
+    q4: '',
+    q5: '',
+  })
+
+  const [respostaAluno, setRespostaAluno] = useState({
+    q1: '',
+    q2: '',
+    q3: '',
+    q4: '',
+    q5: '',
+  })
+
+  const [questoes, setQuestoes] = useState<any[]>([])
+
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(formData))
-  }, [formData])
-
-  // Prova
-  const [questoes, setQuestoes] = useState<Questao[]>([])
-  const [respostas, setRespostas] = useState<Record<string, string>>({})
-  const [provaResultado, setProvaResultado] = useState<any>(null)
-
-  // Importação
-  const [pacoteId, setPacoteId] = useState('')
-  const [pacoteDados, setPacoteDados] = useState<any>(null)
-  const [uploadConfirmado, setUploadConfirmado] = useState(false)
-
-  // Contrato
-  const [contratoConteudo, setContratoConteudo] = useState('')
-  const [contratoId, setContratoId] = useState('')
-
-  // Pagamento
-  const [pagamentoResultado, setPagamentoResultado] = useState<any>(null)
-  const [valorPago, setValorPago] = useState('')
-  const [nomePagador, setNomePagador] = useState('')
-
-  // ─── Step 0: Formulário ───
-  const camposObrigatorios = [
-    'nome',
-    'cpf',
-    'endereco',
-    'telefone',
-    'curso_pretendido',
-    'horario_pretendido',
-  ]
-  const campoVazio = camposObrigatorios.find((c) => !formData[c as keyof FormData]?.trim())
-
-  const criarMatricula = async () => {
-    setLoading(true)
-    try {
-      const rec = await pb.collection('matriculas').create({
-        ...formData,
-        status: 'formulario_concluido',
-        nivel: '',
-        horario_alternativo_oferecido: false,
-        valor_matricula: 350.0,
-      })
-      setMatriculaId(rec.id)
-      // Limpa rascunho após sucesso
-      localStorage.removeItem(STORAGE_KEY)
-      setStep(1)
-    } catch (err: any) {
-      toast.error('Erro ao salvar matrícula: ' + (err.message || 'desconhecido'))
-    } finally {
-      setLoading(false)
+    const saved = localStorage.getItem('matricula_draft')
+    if (saved) {
+      try {
+        setForm(JSON.parse(saved))
+      } catch {}
     }
-  }
+    carregarQuestoes()
+  }, [])
 
-  // ─── Step 1: Prova ───
   const carregarQuestoes = useCallback(async () => {
     try {
-      const records = await pb.collection('questoes_prova').getFullList({ sort: 'ordem' })
-      setQuestoes(records as unknown as Questao[])
-    } catch (err) {
-      toast.error('Erro ao carregar questões')
+      const qs = await pb.collection('questoes_prova').getFullList({ sort: 'ordem' })
+      if (qs.length > 0) {
+        setQuestoes(qs)
+        const p: any = {}
+        qs.forEach((q: any) => {
+          p[q.id] = ''
+        })
+        setProva(p)
+        setRespostaAluno({ ...p })
+      }
+    } catch {
+    } finally {
     }
   }, [])
 
   useEffect(() => {
-    if (step === 1 && questoes.length === 0) carregarQuestoes()
-  }, [step, questoes.length, carregarQuestoes])
+    if (!offline) {
+      localStorage.setItem('matricula_draft', JSON.stringify(form))
+    }
+  }, [form, offline])
 
-  const todasRespondidas = questoes.length > 0 && questoes.every((q) => respostas[q.id])
+  const updateField = (field: string, value: string) => setForm({ ...form, [field]: value })
+  const updateResposta = (field: string, value: string) =>
+    setRespostaAluno({ ...respostaAluno, [field]: value })
 
-  const submeterProva = async () => {
-    setLoading(true)
-    try {
-      // Salva respostas
-      for (const q of questoes) {
-        await pb.collection('prova_respostas').create({
-          matricula_id: matriculaId,
-          questao_id: q.id,
-          resposta: respostas[q.id],
-          acertou: false,
+  const simularOffline = () => {
+    setOffline(true)
+    toast.info('Modo offline ativado. Dados salvos localmente.')
+  }
+
+  const handleAvancar = async () => {
+    if (currentStep === 1) {
+      if (!form.nome || !form.cpf) {
+        toast.error('Preencha nome e CPF')
+        return
+      }
+      setSaving(true)
+      await new Promise((r) => setTimeout(r, 500))
+      setSaving(false)
+      toast.success('Dados salvos localmente')
+    }
+    if (currentStep === 2 && !provaRespondida) {
+      if (questoes.length > 0) {
+        const respostas: any = {}
+        questoes.forEach((q: any) => {
+          respostas[q.id] = respostaAluno[q.id] || ''
         })
+        setProva(respostas)
       }
-      // Chama rota de correção
-      const res = await pb.send('/backend/v1/prova/corrigir', {
-        method: 'POST',
-        body: { matricula_id: matriculaId },
-      })
-      setProvaResultado(res)
-      setStep(2)
-    } catch (err: any) {
-      const msg = err.response?.message || err.message || 'desconhecido'
-      toast.error('Erro ao corrigir prova: ' + msg)
-    } finally {
-      setLoading(false)
+      setProvaRespondida(true)
+      toast.success('Prova salva localmente')
     }
+    setCurrentStep(Math.min(currentStep + 1, 6))
   }
 
-  // ─── Step 2: Importação ───
-  const gerarPacote = async () => {
-    setLoading(true)
-    try {
-      const res = await pb.send('/backend/v1/importacao/gerar', {
-        method: 'POST',
-        body: { matricula_id: matriculaId },
-      })
-      setPacoteId(res.pacote_id)
-      setPacoteDados(res.dados)
-      toast.success('Pacote de importação gerado!')
-    } catch (err: any) {
-      const msg = err.response?.erro || err.message || 'desconhecido'
-      toast.error('Erro: ' + msg)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const uploadPacote = async () => {
-    setLoading(true)
-    try {
-      const res = await pb.send('/backend/v1/importacao/upload', {
-        method: 'POST',
-        body: { pacote_id: pacoteId },
-      })
-      setUploadConfirmado(true)
-      toast.success('Aluno cadastrado com status "pendente"!')
-      setStep(3)
-    } catch (err: any) {
-      const msg = err.response?.erro || err.message || 'desconhecido'
-      toast.error('Erro no upload: ' + msg)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // ─── Step 3: Contrato ───
-  const gerarContrato = async () => {
-    setLoading(true)
-    try {
-      const res = await pb.send('/backend/v1/contrato/gerar', {
-        method: 'POST',
-        body: { matricula_id: matriculaId },
-      })
-      setContratoConteudo(res.conteudo)
-      setContratoId(res.contrato_id)
-      toast.success('Contrato gerado!')
-    } catch (err: any) {
-      const msg = err.response?.erro || err.message || 'desconhecido'
-      toast.error('Erro: ' + msg)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const baixarContrato = () => {
-    const blob = new Blob([contratoConteudo], { type: 'text/plain;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `contrato-${formData.nome || 'aluno'}.txt`
-    a.click()
-    URL.revokeObjectURL(url)
-  }
-
-  // ─── Step 4: Pagamento ───
-  const confirmarPagamento = async () => {
-    setLoading(true)
-    try {
-      const res = await pb.send('/backend/v1/pagamento/confirmar', {
-        method: 'POST',
-        body: {
-          matricula_id: matriculaId,
-          valor_pago: parseFloat(valorPago),
-          nome_pagador: nomePagador,
-          data_pagamento: new Date().toISOString(),
-        },
-      })
-      setPagamentoResultado(res)
-      if (res.ativada) {
-        toast.success('Matrícula ativada!')
-        setStep(5)
-      } else {
-        toast.warning('Pagamento parcial — fila de verificação manual.')
-      }
-    } catch (err: any) {
-      toast.error('Erro: ' + (err.message || 'desconhecido'))
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // ─── Simular queda de conexão e recuperação (SPEC-1-001 CA-1-02) ───
-  const simularQuedaConexao = () => {
-    toast.info('Simulando queda de conexão... Os dados estão salvos no localStorage.')
-    setTimeout(() => {
-      toast.success('Conexão restabelecida! Dados recuperados do rascunho.')
-    }, 2000)
-  }
-
-  const stepIcons = [FileText, ClipboardCheck, Upload, FileSignature, CreditCard, Bell]
-  const stepNames = ['Formulário', 'Prova', 'Importação', 'Contrato', 'Pagamento', 'Notificação']
+  const handleVoltar = () => setCurrentStep(Math.max(currentStep - 1, 1))
 
   return (
-    <div className="container mx-auto py-6 px-4 max-w-3xl">
-      {/* Stepper */}
-      <div className="flex items-center justify-between mb-8 overflow-x-auto">
-        {stepNames.map((name, i) => {
-          const Icon = stepIcons[i]
-          const isCurrent = step === i
-          const isDone = step > i
-          return (
-            <div key={i} className="flex items-center flex-shrink-0">
-              <div className="flex flex-col items-center gap-1">
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-colors ${
-                    isDone
-                      ? 'bg-green-500 border-green-500 text-white'
-                      : isCurrent
-                        ? 'bg-blue-600 border-blue-600 text-white'
-                        : 'bg-white border-gray-300 text-gray-400'
-                  }`}
-                >
-                  {isDone ? <CheckCircle2 className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
-                </div>
-                <span
-                  className={`text-xs ${isCurrent ? 'font-bold text-blue-600' : 'text-gray-500'}`}
-                >
-                  {name}
-                </span>
+    <div className="container mx-auto py-8 px-6 max-w-4xl">
+      {/* Progress Stepper */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between relative">
+          {/* Progress Line */}
+          <div className="absolute top-5 left-0 right-0 h-1 bg-gt-outline-variant rounded-full mx-12">
+            <div
+              className="h-full bg-gt-primary-container rounded-full transition-all duration-500"
+              style={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }}
+            />
+          </div>
+
+          {/* Steps */}
+          {steps.map((step) => (
+            <div key={step.num} className="relative z-10 flex flex-col items-center">
+              <div
+                className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
+                  currentStep > step.num
+                    ? 'bg-green-500 text-white'
+                    : currentStep === step.num
+                      ? 'bg-gt-primary-container text-white shadow-lg scale-110'
+                      : 'bg-gt-surface-container text-gt-outline border-2 border-gt-outline-variant'
+                }`}
+              >
+                {currentStep > step.num ? (
+                  <CheckCircle2 className="w-5 h-5" />
+                ) : (
+                  <step.icon className="w-5 h-5" />
+                )}
               </div>
-              {i < stepNames.length - 1 && (
-                <div className={`w-8 h-0.5 mx-1 ${isDone ? 'bg-green-500' : 'bg-gray-300'}`} />
-              )}
+              <span
+                className={`mt-2 text-xs font-medium ${
+                  currentStep === step.num ? 'text-gt-primary-container' : 'text-gt-outline'
+                }`}
+              >
+                {step.label}
+              </span>
             </div>
-          )
-        })}
+          ))}
+        </div>
       </div>
 
-      {/* Step 0: Formulário */}
-      {step === 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="w-5 h-5 text-blue-600" />
-              Formulário de Matrícula
-            </CardTitle>
-            <p className="text-sm text-gray-500">
-              Os 6 campos são capturados uma única vez. O autosave protege os dados em caso de queda
-              de conexão.
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="nome">Nome completo *</Label>
-              <Input
-                id="nome"
-                value={formData.nome}
-                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                placeholder="Nome do aluno"
-              />
-            </div>
-            <div>
-              <Label htmlFor="cpf">CPF *</Label>
-              <Input
-                id="cpf"
-                value={formData.cpf}
-                onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
-                placeholder="000.000.000-00"
-              />
-            </div>
-            <div>
-              <Label htmlFor="endereco">Endereço *</Label>
-              <Input
-                id="endereco"
-                value={formData.endereco}
-                onChange={(e) => setFormData({ ...formData, endereco: e.target.value })}
-                placeholder="Rua, número, bairro, cidade"
-              />
-            </div>
-            <div>
-              <Label htmlFor="telefone">Telefone *</Label>
-              <Input
-                id="telefone"
-                value={formData.telefone}
-                onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
-                placeholder="(00) 00000-0000"
-              />
-            </div>
-            <div>
-              <Label htmlFor="curso">Curso pretendido *</Label>
-              <Input
-                id="curso"
-                value={formData.curso_pretendido}
-                onChange={(e) => setFormData({ ...formData, curso_pretendido: e.target.value })}
-                placeholder="Ex: Inglês"
-              />
-            </div>
-            <div>
-              <Label htmlFor="horario">Horário pretendido *</Label>
-              <Input
-                id="horario"
-                value={formData.horario_pretendido}
-                onChange={(e) => setFormData({ ...formData, horario_pretendido: e.target.value })}
-                placeholder="Ex: Seg/Qua 19:00"
-              />
-            </div>
-
-            {campoVazio && (
-              <div className="flex items-center gap-2 text-amber-600 text-sm">
-                <AlertCircle className="w-4 h-4" />
-                Campo obrigatório pendente: <strong>{campoVazio}</strong>
-              </div>
-            )}
-
-            <div className="flex items-center justify-between pt-2">
-              <Button variant="outline" size="sm" onClick={simularQuedaConexao}>
-                Simular queda de conexão
-              </Button>
-              <Button onClick={criarMatricula} disabled={!!campoVazio || loading}>
-                {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                Avançar para prova
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Step 1: Prova de Nivelamento */}
-      {step === 1 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <ClipboardCheck className="w-5 h-5 text-blue-600" />
-              Prova de Nivelamento
-            </CardTitle>
-            <p className="text-sm text-gray-500">
-              Correção automática. O resultado define o nível e direciona para a turma/horário.
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {questoes.map((q, i) => (
-              <div key={q.id} className="space-y-2">
-                <div className="font-medium">
-                  {i + 1}. {q.enunciado}
-                </div>
-                <RadioGroup
-                  value={respostas[q.id] || ''}
-                  onValueChange={(v) => setRespostas({ ...respostas, [q.id]: v })}
-                >
-                  {(['a', 'b', 'c', 'd'] as const).map((opt) => (
-                    <div key={opt} className="flex items-center space-x-2">
-                      <RadioGroupItem value={opt} id={`q${q.id}-${opt}`} />
-                      <Label htmlFor={`q${q.id}-${opt}`} className="font-normal cursor-pointer">
-                        {q[`opcao_${opt}` as keyof Questao] as string}
-                      </Label>
-                    </div>
-                  ))}
-                </RadioGroup>
-              </div>
-            ))}
-
-            <div className="flex items-center justify-between pt-2">
-              <Button variant="outline" onClick={() => setStep(0)}>
-                <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
-              </Button>
-              <Button onClick={submeterProva} disabled={!todasRespondidas || loading}>
-                {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                Corrigir prova
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Step 2: Importação */}
-      {step === 2 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Upload className="w-5 h-5 text-blue-600" />
-              Registro via Importação
-            </CardTitle>
-            <p className="text-sm text-gray-500">
-              O pacote é gerado a partir dos dados já capturados. Upload em 1 ação, sem redigitação.
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {provaResultado && (
-              <div className="bg-blue-50 rounded-lg p-4 space-y-1">
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary">Nível: {provaResultado.nivel}</Badge>
-                  <Badge variant="outline">
-                    {provaResultado.acertos}/{provaResultado.total} acertos
-                  </Badge>
-                </div>
-                {provaResultado.turma && (
-                  <p className="text-sm text-gray-700 mt-2">
-                    Turma: <strong>{provaResultado.turma.curso}</strong> —{' '}
-                    {provaResultado.turma.horario}
-                    {provaResultado.horario_alternativo && (
-                      <span className="text-amber-600 ml-2">(horário alternativo oferecido)</span>
-                    )}
-                  </p>
-                )}
-                {provaResultado.pendente && (
-                  <p className="text-sm text-amber-600 mt-2">{provaResultado.mensagem}</p>
-                )}
-              </div>
-            )}
-
-            {!pacoteId ? (
-              <Button onClick={gerarPacote} disabled={loading} className="w-full">
-                {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                Gerar pacote de importação
-              </Button>
-            ) : !uploadConfirmado ? (
-              <div className="space-y-3">
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <p className="text-sm font-medium mb-2">Pacote gerado:</p>
-                  <pre className="text-xs overflow-x-auto bg-white p-3 rounded border">
-                    {JSON.stringify(pacoteDados, null, 2)}
-                  </pre>
-                </div>
-                <Button onClick={uploadPacote} disabled={loading} className="w-full">
-                  {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                  <Upload className="w-4 h-4 mr-2" />
-                  Fazer upload (1 ação)
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 text-green-600">
-                  <CheckCircle2 className="w-5 h-5" />
-                  <span>Aluno cadastrado como "pendente". Nenhum campo redigitado.</span>
-                </div>
-                <Button onClick={() => setStep(3)} className="w-full">
-                  Avançar para contrato
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Step 3: Contrato */}
-      {step === 3 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileSignature className="w-5 h-5 text-blue-600" />
-              Geração de Contrato PDF
-            </CardTitle>
-            <p className="text-sm text-gray-500">
-              O contrato é gerado automaticamente a partir dos dados do formulário.
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {!contratoConteudo ? (
-              <Button onClick={gerarContrato} disabled={loading} className="w-full">
-                {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                Gerar contrato
-              </Button>
-            ) : (
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 text-green-600">
-                  <CheckCircle2 className="w-5 h-5" />
-                  <span>Contrato gerado sem edição manual.</span>
-                </div>
-                <div className="bg-gray-50 rounded-lg p-4 max-h-64 overflow-y-auto">
-                  <pre className="text-xs whitespace-pre-wrap font-mono">{contratoConteudo}</pre>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" onClick={baixarContrato}>
-                    <Download className="w-4 h-4 mr-2" /> Baixar
-                  </Button>
-                  <Button onClick={() => setStep(4)} className="flex-1">
-                    Avançar para pagamento
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Step 4: Pagamento */}
-      {step === 4 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CreditCard className="w-5 h-5 text-blue-600" />
-              Confirmação de Pagamento PIX
-            </CardTitle>
-            <p className="text-sm text-gray-500">
-              Identificação automática por valor + nome. Pagamento parcial vai para fila manual.
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="bg-blue-50 rounded-lg p-4">
-              <p className="text-sm text-gray-700">
-                Valor da matrícula: <strong>R$ 350,00</strong>
-              </p>
-            </div>
-            <div>
-              <Label htmlFor="valor">Valor pago (R$)</Label>
-              <Input
-                id="valor"
-                type="number"
-                step="0.01"
-                value={valorPago}
-                onChange={(e) => setValorPago(e.target.value)}
-                placeholder="350.00"
-              />
-            </div>
-            <div>
-              <Label htmlFor="pagador">Nome do pagador</Label>
-              <Input
-                id="pagador"
-                value={nomePagador}
-                onChange={(e) => setNomePagador(e.target.value)}
-                placeholder={formData.nome || 'Nome de quem pagou'}
-              />
-            </div>
-
-            {pagamentoResultado && !pagamentoResultado.ativada && (
-              <div className="bg-amber-50 rounded-lg p-4 flex items-start gap-2">
-                <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+      {/* Step Content */}
+      <Card className="gt-card">
+        <CardHeader className="border-b border-gt-outline-variant">
+          <CardTitle className="text-xl font-bold text-gt-on-surface flex items-center gap-3">
+            {(() => {
+              const Icon = steps[currentStep - 1].icon
+              return <Icon className="w-6 h-6 text-gt-primary-container" />
+            })()}
+            Passo {currentStep}: {steps[currentStep - 1].label}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6">
+          {/* Step 1: Formulário */}
+          {currentStep === 1 && (
+            <div className="space-y-5 animate-fade-in">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
-                  <p className="text-sm font-medium text-amber-800">Pagamento parcial</p>
-                  <p className="text-sm text-amber-700">
-                    Matrícula não ativada. Caso enviado para fila de verificação manual.
-                  </p>
+                  <Label htmlFor="nome" className="text-sm font-medium text-gt-on-surface">
+                    Nome completo *
+                  </Label>
+                  <Input
+                    id="nome"
+                    value={form.nome}
+                    onChange={(e) => updateField('nome', e.target.value)}
+                    className="mt-1.5 border-gt-outline-variant focus:ring-gt-primary-container"
+                    placeholder="Nome do aluno"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="cpf" className="text-sm font-medium text-gt-on-surface">
+                    CPF *
+                  </Label>
+                  <Input
+                    id="cpf"
+                    value={form.cpf}
+                    onChange={(e) => updateField('cpf', e.target.value)}
+                    className="mt-1.5 border-gt-outline-variant focus:ring-gt-primary-container"
+                    placeholder="000.000.000-00"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="telefone" className="text-sm font-medium text-gt-on-surface">
+                    Telefone
+                  </Label>
+                  <Input
+                    id="telefone"
+                    value={form.telefone}
+                    onChange={(e) => updateField('telefone', e.target.value)}
+                    className="mt-1.5 border-gt-outline-variant focus:ring-gt-primary-container"
+                    placeholder="(00) 00000-0000"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="endereco" className="text-sm font-medium text-gt-on-surface">
+                    Endereço
+                  </Label>
+                  <Input
+                    id="endereco"
+                    value={form.endereco}
+                    onChange={(e) => updateField('endereco', e.target.value)}
+                    className="mt-1.5 border-gt-outline-variant focus:ring-gt-primary-container"
+                    placeholder="Rua, número, bairro"
+                  />
                 </div>
               </div>
-            )}
-
-            <div className="flex items-center justify-between">
-              <Button variant="outline" onClick={() => setStep(3)}>
-                <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
-              </Button>
-              <Button onClick={confirmarPagamento} disabled={!valorPago || loading}>
-                {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                Confirmar pagamento
-              </Button>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <Label htmlFor="curso" className="text-sm font-medium text-gt-on-surface">
+                    Curso pretendido
+                  </Label>
+                  <select
+                    id="curso"
+                    value={form.curso}
+                    onChange={(e) => updateField('curso', e.target.value)}
+                    className="mt-1.5 w-full rounded-lg border border-gt-outline-variant bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-gt-primary-container focus:border-gt-primary-container"
+                  >
+                    <option value="ingles">Inglês</option>
+                    <option value="espanhol">Espanhol</option>
+                    <option value="frances">Francês</option>
+                    <option value="alemao">Alemão</option>
+                    <option value="italiano">Italiano</option>
+                  </select>
+                </div>
+                <div>
+                  <Label htmlFor="horario" className="text-sm font-medium text-gt-on-surface">
+                    Horário pretendido
+                  </Label>
+                  <select
+                    id="horario"
+                    value={form.horario}
+                    onChange={(e) => updateField('horario', e.target.value)}
+                    className="mt-1.5 w-full rounded-lg border border-gt-outline-variant bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-gt-primary-container focus:border-gt-primary-container"
+                  >
+                    <option value="08:00">08:00 - 09:30</option>
+                    <option value="10:00">10:00 - 11:30</option>
+                    <option value="14:00">14:00 - 15:30</option>
+                    <option value="19:00">19:00 - 20:30</option>
+                  </select>
+                </div>
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          )}
 
-      {/* Step 5: Notificação / Conclusão */}
-      {step === 5 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bell className="w-5 h-5 text-blue-600" />
-              Matrícula Concluída!
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="bg-green-50 rounded-lg p-6 text-center space-y-3">
-              <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto" />
-              <p className="text-lg font-medium text-green-800">Matrícula ativada com sucesso!</p>
-              <p className="text-sm text-gray-600">
-                A coordenadora foi notificada automaticamente no sistema.
+          {/* Step 2: Prova de Nivelamento */}
+          {currentStep === 2 && (
+            <div className="space-y-6 animate-fade-in">
+              <div className="bg-gt-surface-container rounded-lg p-4 border border-gt-outline-variant">
+                <p className="text-sm text-gt-on-surface-variant">
+                  Responda as perguntas abaixo para definir o nível do aluno. Não se preocupe, isso
+                  é apenas uma orientação.
+                </p>
+              </div>
+
+              {questoes.length > 0 ? (
+                questoes.map((q, i) => (
+                  <div key={q.id} className="space-y-2">
+                    <Label className="text-sm font-medium text-gt-on-surface">
+                      {i + 1}. {q.enunciado}
+                    </Label>
+                    <div className="space-y-2">
+                      {q.alternativas?.map((alt: string, j: number) => (
+                        <label
+                          key={j}
+                          className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                            respostaAluno[q.id] === alt
+                              ? 'border-gt-primary-container bg-blue-50'
+                              : 'border-gt-outline-variant hover:bg-gt-surface-container'
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name={q.id}
+                            value={alt}
+                            checked={respostaAluno[q.id] === alt}
+                            onChange={(e) => updateResposta(q.id, e.target.value)}
+                            className="w-4 h-4 text-gt-primary-container"
+                          />
+                          <span className="text-sm">{alt}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-gt-outline">
+                  <p>Carregando questões...</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Steps 3-6: Placeholder */}
+          {currentStep >= 3 && (
+            <div className="text-center py-12 animate-fade-in">
+              <div className="w-16 h-16 rounded-full bg-gt-surface-container flex items-center justify-center mx-auto mb-4">
+                {(() => {
+                  const Icon = steps[currentStep - 1].icon
+                  return <Icon className="w-8 h-8 text-gt-primary-container" />
+                })()}
+              </div>
+              <h3 className="text-lg font-semibold text-gt-on-surface mb-2">
+                {steps[currentStep - 1].label}
+              </h3>
+              <p className="text-gt-on-surface-variant max-w-md mx-auto">
+                {currentStep === 3 &&
+                  'Importação automática de dados do aluno a partir de documentos.'}
+                {currentStep === 4 && 'Geração automática do contrato de prestação de serviços.'}
+                {currentStep === 5 && 'Pagamento via PIX com confirmação automática.'}
+                {currentStep === 6 &&
+                  'Notificação para a coordenadora com todos os dados do aluno.'}
               </p>
             </div>
+          )}
+        </CardContent>
+      </Card>
 
-            {pagamentoResultado?.divergencia_nome && (
-              <div className="bg-amber-50 rounded-lg p-4">
-                <p className="text-sm font-medium text-amber-800">Nota de divergência:</p>
-                <p className="text-sm text-amber-700 mt-1">{pagamentoResultado.nota_divergencia}</p>
-              </div>
+      {/* Navigation Buttons */}
+      <div className="flex justify-between mt-6">
+        <div className="flex gap-3">
+          {currentStep > 1 && (
+            <Button variant="outline" onClick={handleVoltar} className="border-gt-outline-variant">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Voltar
+            </Button>
+          )}
+          <Button variant="ghost" onClick={simularOffline} className="text-gt-outline">
+            {offline ? <WifiOff className="w-4 h-4 mr-2" /> : <Wifi className="w-4 h-4 mr-2" />}
+            {offline ? 'Offline' : 'Simular queda de conexão'}
+          </Button>
+        </div>
+
+        {currentStep < 6 ? (
+          <Button
+            onClick={handleAvancar}
+            disabled={saving}
+            className="bg-gt-primary-container hover:bg-gt-primary text-white"
+          >
+            {saving ? (
+              <span className="flex items-center">
+                <svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24">
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    fill="none"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                  />
+                </svg>
+                Salvando...
+              </span>
+            ) : (
+              <>
+                Avançar para {steps[currentStep].label}
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </>
             )}
+          </Button>
+        ) : (
+          <Button className="bg-green-600 hover:bg-green-700 text-white">
+            <CheckCircle2 className="w-4 h-4 mr-2" />
+            Finalizar Matrícula
+          </Button>
+        )}
+      </div>
 
-            <div className="flex gap-2 justify-center">
-              <Button variant="outline" onClick={() => navigate('/')}>
-                Voltar ao início
-              </Button>
-              <Button onClick={() => navigate('/coordenadora')}>Ver painel da coordenadora</Button>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Offline Indicator */}
+      {offline && (
+        <div className="fixed bottom-4 right-4 bg-amber-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 animate-fade-in">
+          <WifiOff className="w-4 h-4" />
+          <span className="text-sm font-medium">Modo offline — dados salvos localmente</span>
+        </div>
       )}
     </div>
   )

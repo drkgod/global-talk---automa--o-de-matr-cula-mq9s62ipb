@@ -1,220 +1,163 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Bell, CheckCircle2, Clock, Users, AlertCircle } from 'lucide-react'
-import pb from '@/lib/pocketbase/client'
-import { useRealtime } from '@/hooks/use-realtime'
+import { Badge } from '@/components/ui/badge'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { toast } from 'sonner'
-
-interface Notificacao {
-  id: string
-  matricula_id: string
-  nome_aluno: string
-  nivel: string
-  curso: string
-  horario_pretendido: string
-  lida: boolean
-  created: string
-}
-
-interface Matricula {
-  id: string
-  nome: string
-  cpf: string
-  status: string
-  nivel: string
-  curso_pretendido: string
-  horario_pretendido: string
-  created: string
-}
+import { Bell, CheckCircle2, Clock, Users, Mail, Eye } from 'lucide-react'
+import pb from '@/lib/pocketbase/client'
 
 const CoordenadoraPainel = () => {
-  const [notificacoes, setNotificacoes] = useState<Notificacao[]>([])
-  const [matriculas, setMatriculas] = useState<Matricula[]>([])
+  const [notificacoes, setNotificacoes] = useState<any[]>([])
+  const [matriculas, setMatriculas] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
-  const carregarDados = useCallback(async () => {
+  const carregar = useCallback(async () => {
     try {
-      const notifs = await pb.collection('notificacoes_coordenadora').getFullList({
-        sort: '-created',
-        expand: 'matricula_id',
-      })
-      setNotificacoes(notifs as unknown as Notificacao[])
-
-      const mats = await pb.collection('matriculas').getFullList({ sort: '-created' })
-      setMatriculas(mats as unknown as Matricula[])
-    } catch (err) {
-      toast.error('Erro ao carregar dados')
+      const n = await pb.collection('notificacoes_coordenadora').getFullList({ sort: '-created' })
+      setNotificacoes(n)
+      const m = await pb.collection('matriculas').getFullList({ sort: '-created' })
+      setMatriculas(m)
+    } catch {
     } finally {
       setLoading(false)
     }
   }, [])
 
   useEffect(() => {
-    carregarDados()
-  }, [carregarDados])
+    carregar()
+  }, [carregar])
 
-  // Realtime: atualiza quando nova notificação chega (SPEC-1-006)
-  useRealtime('notificacoes_coordenadora', () => {
-    carregarDados()
-  })
-
-  // Realtime: atualiza quando matrícula muda de status
-  useRealtime('matriculas', () => {
-    carregarDados()
-  })
-
-  const marcarComoLida = async (id: string) => {
+  const marcarLida = async (id: string) => {
     try {
       await pb.collection('notificacoes_coordenadora').update(id, { lida: true })
-      setNotificacoes((prev) => prev.map((n) => (n.id === id ? { ...n, lida: true } : n)))
-    } catch (err) {
-      toast.error('Erro ao marcar notificação')
+      toast.success('Notificação marcada como lida')
+      carregar()
+    } catch {
+      toast.error('Erro ao atualizar')
     }
   }
 
-  const marcarTodasComoLidas = async () => {
+  const marcarTodasLidas = async () => {
     const naoLidas = notificacoes.filter((n) => !n.lida)
     for (const n of naoLidas) {
-      try {
-        await pb.collection('notificacoes_coordenadora').update(n.id, { lida: true })
-      } catch (err) {
-        /* ignore */
-      }
+      await pb.collection('notificacoes_coordenadora').update(n.id, { lida: true })
     }
-    setNotificacoes((prev) => prev.map((n) => ({ ...n, lida: true })))
-    toast.success('Todas as notificações marcadas como lidas')
+    toast.success(`${naoLidas.length} notificações marcadas como lidas`)
+    carregar()
   }
 
   const naoLidas = notificacoes.filter((n) => !n.lida)
-  const ativas = matriculas.filter((m) => m.status === 'ativo')
-  const pendentes = matriculas.filter((m) => m.status === 'pendente')
-
-  const statusBadge = (status: string) => {
-    const map: Record<string, string> = {
-      rascunho: 'bg-gray-100 text-gray-700',
-      formulario_concluido: 'bg-blue-100 text-blue-700',
-      prova_concluida: 'bg-indigo-100 text-indigo-700',
-      pendente: 'bg-amber-100 text-amber-700',
-      ativo: 'bg-green-100 text-green-700',
-    }
-    return map[status] || 'bg-gray-100 text-gray-700'
-  }
-
-  const nivelLabel = (n: string) => {
-    const map: Record<string, string> = {
-      basico: 'Básico',
-      intermediario: 'Intermediário',
-      avancado: 'Avançado',
-    }
-    return map[n] || '—'
-  }
-
-  if (loading) {
-    return (
-      <div className="container mx-auto py-8 px-4">
-        <p className="text-gray-500 text-center">Carregando...</p>
-      </div>
-    )
-  }
+  const matriculasAtivas = matriculas.filter((m) => m.status === 'ativo')
+  const pendentes = matriculas.filter((m) => m.status === 'pendente' || m.status === 'em_andamento')
 
   return (
-    <div className="container mx-auto py-6 px-4 max-w-5xl">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Bell className="w-6 h-6 text-blue-600" />
-          Painel da Coordenadora
-        </h1>
+    <div className="container mx-auto py-8 px-6 max-w-6xl">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-gt-on-surface flex items-center gap-3">
+            <Bell className="w-8 h-8 text-gt-primary-container" />
+            Painel da Coordenadora
+          </h1>
+          <p className="text-gt-on-surface-variant mt-1">
+            Gerencie notificações e acompanhe as matrículas
+          </p>
+        </div>
         {naoLidas.length > 0 && (
-          <Button variant="outline" size="sm" onClick={marcarTodasComoLidas}>
+          <Button
+            onClick={marcarTodasLidas}
+            variant="outline"
+            className="border-gt-outline-variant"
+          >
             <CheckCircle2 className="w-4 h-4 mr-2" />
-            Marcar todas como lidas ({naoLidas.length})
+            Marcar todas como lidas
           </Button>
         )}
       </div>
 
-      {/* Cards de resumo */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <Card>
-          <CardContent className="pt-6">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <Card className="gt-card">
+          <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Não lidas</p>
-                <p className="text-2xl font-bold text-amber-600">{naoLidas.length}</p>
+                <p className="text-sm font-medium text-gt-outline">Não lidas</p>
+                <p className="text-3xl font-bold text-amber-600">{naoLidas.length}</p>
               </div>
-              <Bell className="w-8 h-8 text-amber-400" />
+              <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center">
+                <Bell className="w-6 h-6 text-amber-600" />
+              </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-6">
+
+        <Card className="gt-card">
+          <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Matrículas ativas</p>
-                <p className="text-2xl font-bold text-green-600">{ativas.length}</p>
+                <p className="text-sm font-medium text-gt-outline">Matrículas ativas</p>
+                <p className="text-3xl font-bold text-green-600">{matriculasAtivas.length}</p>
               </div>
-              <CheckCircle2 className="w-8 h-8 text-green-400" />
+              <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center">
+                <CheckCircle2 className="w-6 h-6 text-green-600" />
+              </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-6">
+
+        <Card className="gt-card">
+          <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Pendentes</p>
-                <p className="text-2xl font-bold text-orange-600">{pendentes.length}</p>
+                <p className="text-sm font-medium text-gt-outline">Pendentes</p>
+                <p className="text-3xl font-bold text-orange-600">{pendentes.length}</p>
               </div>
-              <Clock className="w-8 h-8 text-orange-400" />
+              <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center">
+                <Clock className="w-6 h-6 text-orange-600" />
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Fila de notificações */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-lg">Fila de Notificações</CardTitle>
-          <p className="text-sm text-gray-500">
-            Novos alunos confirmados — sem depender de WhatsApp.
-          </p>
+      {/* Notifications */}
+      <Card className="gt-card mb-8">
+        <CardHeader className="border-b border-gt-outline-variant">
+          <CardTitle className="text-lg font-bold text-gt-on-surface">
+            Fila de Notificações
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          {notificacoes.length === 0 ? (
-            <div className="text-center py-8 text-gray-400">
-              <Bell className="w-10 h-10 mx-auto mb-2 opacity-40" />
-              <p>Nenhuma notificação ainda.</p>
-            </div>
+        <CardContent className="p-0">
+          {loading ? (
+            <div className="p-8 text-center text-gt-outline">Carregando...</div>
+          ) : notificacoes.length === 0 ? (
+            <div className="p-8 text-center text-gt-outline">Nenhuma notificação</div>
           ) : (
-            <div className="space-y-3">
-              {notificacoes.map((n) => (
+            <div className="divide-y divide-gt-outline-variant">
+              {notificacoes.slice(0, 5).map((n) => (
                 <div
                   key={n.id}
-                  className={`flex items-start justify-between p-3 rounded-lg border transition-colors ${
-                    n.lida ? 'bg-white border-gray-200' : 'bg-blue-50 border-blue-200'
-                  }`}
+                  className={`p-4 flex items-center justify-between ${!n.lida ? 'bg-blue-50' : ''}`}
                 >
-                  <div className="flex items-start gap-3">
-                    {!n.lida && (
-                      <div className="w-2 h-2 rounded-full bg-blue-500 mt-2 flex-shrink-0" />
-                    )}
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium">{n.nome_aluno}</span>
-                        {n.nivel && <Badge variant="secondary">{nivelLabel(n.nivel)}</Badge>}
-                      </div>
-                      <div className="text-sm text-gray-500 flex items-center gap-3">
-                        {n.curso && <span>Curso: {n.curso}</span>}
-                        {n.horario_pretendido && <span>Horário: {n.horario_pretendido}</span>}
-                      </div>
-                      <span className="text-xs text-gray-400">
-                        {new Date(n.created).toLocaleString('pt-BR')}
-                      </span>
+                  <div className="flex items-center gap-4">
+                    {!n.lida && <div className="w-2 h-2 rounded-full bg-gt-primary-container" />}
+                    <div>
+                      <p className="font-medium text-gt-on-surface">{n.aluno_nome || 'Aluno'}</p>
+                      <p className="text-sm text-gt-on-surface-variant">{n.mensagem || n.tipo}</p>
                     </div>
                   </div>
                   {!n.lida && (
-                    <Button variant="ghost" size="sm" onClick={() => marcarComoLida(n.id)}>
-                      Marcar como lida
+                    <Button size="sm" variant="ghost" onClick={() => marcarLida(n.id)}>
+                      <Eye className="w-4 h-4 mr-1" />
+                      Lida
                     </Button>
                   )}
                 </div>
@@ -224,55 +167,52 @@ const CoordenadoraPainel = () => {
         </CardContent>
       </Card>
 
-      {/* Lista de matrículas */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Users className="w-5 h-5 text-blue-600" />
+      {/* Enrollments Table */}
+      <Card className="gt-card">
+        <CardHeader className="border-b border-gt-outline-variant">
+          <CardTitle className="text-lg font-bold text-gt-on-surface">
             Todas as Matrículas
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {matriculas.length === 0 ? (
-            <div className="text-center py-8 text-gray-400">
-              <Users className="w-10 h-10 mx-auto mb-2 opacity-40" />
-              <p>Nenhuma matrícula registrada ainda.</p>
-            </div>
+            <div className="p-8 text-center text-gt-outline">Nenhuma matrícula encontrada</div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b text-left text-gray-500">
-                    <th className="py-2 pr-4">Nome</th>
-                    <th className="py-2 pr-4">CPF</th>
-                    <th className="py-2 pr-4">Nível</th>
-                    <th className="py-2 pr-4">Curso</th>
-                    <th className="py-2 pr-4">Status</th>
-                    <th className="py-2">Data</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {matriculas.map((m) => (
-                    <tr key={m.id} className="border-b hover:bg-gray-50">
-                      <td className="py-2 pr-4 font-medium">{m.nome || '—'}</td>
-                      <td className="py-2 pr-4 text-gray-500">{m.cpf || '—'}</td>
-                      <td className="py-2 pr-4">{nivelLabel(m.nivel)}</td>
-                      <td className="py-2 pr-4">{m.curso_pretendido || '—'}</td>
-                      <td className="py-2 pr-4">
-                        <span
-                          className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusBadge(m.status)}`}
-                        >
-                          {m.status}
-                        </span>
-                      </td>
-                      <td className="py-2 text-gray-400 text-xs">
-                        {new Date(m.created).toLocaleDateString('pt-BR')}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <Table>
+              <TableHeader>
+                <TableRow className="border-b border-gt-outline-variant">
+                  <TableHead className="font-semibold text-gt-on-surface">Nome</TableHead>
+                  <TableHead className="font-semibold text-gt-on-surface">CPF</TableHead>
+                  <TableHead className="font-semibold text-gt-on-surface">Nível</TableHead>
+                  <TableHead className="font-semibold text-gt-on-surface">Curso</TableHead>
+                  <TableHead className="font-semibold text-gt-on-surface">Status</TableHead>
+                  <TableHead className="font-semibold text-gt-on-surface">Data</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {matriculas.map((m) => (
+                  <TableRow
+                    key={m.id}
+                    className="border-b border-gt-outline-variant hover:bg-gt-surface-container"
+                  >
+                    <TableCell className="font-medium text-gt-on-surface">{m.nome_aluno}</TableCell>
+                    <TableCell className="text-gt-on-surface-variant">{m.cpf}</TableCell>
+                    <TableCell>
+                      <Badge className="gt-badge-blue">{m.nivel || '—'}</Badge>
+                    </TableCell>
+                    <TableCell className="text-gt-on-surface-variant">{m.curso}</TableCell>
+                    <TableCell>
+                      <Badge className={m.status === 'ativo' ? 'gt-badge-green' : 'gt-badge-amber'}>
+                        {m.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-sm text-gt-outline">
+                      {new Date(m.created).toLocaleDateString('pt-BR')}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>

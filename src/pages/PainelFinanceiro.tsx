@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
-import { Receipt, Loader2, CheckCircle2 } from 'lucide-react'
+import { Receipt, Loader2, DollarSign, TrendingUp, CreditCard } from 'lucide-react'
 import pb from '@/lib/pocketbase/client'
 
 const PainelFinanceiro = () => {
@@ -30,8 +30,7 @@ const PainelFinanceiro = () => {
       setMensalidades(m)
       const c = await pb.collection('conciliacao_bancaria').getFullList({ sort: '-created' })
       setConciliacoes(c)
-    } catch (_) {
-      /* dados ainda não existem */
+    } catch {
     } finally {
       setLoading(false)
     }
@@ -89,11 +88,12 @@ const PainelFinanceiro = () => {
 
   const statusBadge = (s: string) =>
     ({
-      pendente: 'bg-yellow-100 text-yellow-800',
-      pago: 'bg-green-100 text-green-800',
-      atrasado: 'bg-red-100 text-red-800',
-      cancelado: 'bg-gray-100',
-    })[s] || 'bg-gray-100'
+      pendente: 'gt-badge-amber',
+      pago: 'gt-badge-green',
+      atrasado: 'gt-badge-red',
+      cancelado: 'bg-gray-100 text-gray-700',
+    })[s] || 'bg-gray-100 text-gray-700'
+
   const totalReceber = mensalidades
     .filter((m) => m.status === 'pendente' || m.status === 'atrasado')
     .reduce((s, m) => s + m.valor, 0)
@@ -102,63 +102,125 @@ const PainelFinanceiro = () => {
     .reduce((s, m) => s + (m.valor_pago || m.valor), 0)
 
   return (
-    <div className="container mx-auto py-6 px-4 max-w-5xl">
-      <h1 className="text-2xl font-bold mb-6 flex items-center gap-2">
-        <Receipt className="w-6 h-6 text-blue-600" />
-        Painel Financeiro
-      </h1>
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm text-gray-500">A receber</p>
-            <p className="text-2xl font-bold text-amber-600">R$ {totalReceber.toFixed(2)}</p>
+    <div className="container mx-auto py-8 px-6 max-w-6xl">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gt-on-surface flex items-center gap-3">
+          <Receipt className="w-8 h-8 text-gt-primary-container" />
+          Painel Financeiro
+        </h1>
+        <p className="text-gt-on-surface-variant mt-1">
+          Gerencie mensalidades e conciliação bancária
+        </p>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <Card className="gt-card">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gt-outline">A receber</p>
+                <p className="text-3xl font-bold text-amber-600">R$ {totalReceber.toFixed(2)}</p>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center">
+                <DollarSign className="w-6 h-6 text-amber-600" />
+              </div>
+            </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm text-gray-500">Recebido</p>
-            <p className="text-2xl font-bold text-green-600">R$ {totalRecebido.toFixed(2)}</p>
+
+        <Card className="gt-card">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gt-outline">Recebido</p>
+                <p className="text-3xl font-bold text-green-600">R$ {totalRecebido.toFixed(2)}</p>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-green-600" />
+              </div>
+            </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm text-gray-500">Mensalidades</p>
-            <p className="text-2xl font-bold text-blue-600">{mensalidades.length}</p>
+
+        <Card className="gt-card">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gt-outline">Mensalidades</p>
+                <p className="text-3xl font-bold text-gt-primary-container">
+                  {mensalidades.length}
+                </p>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
+                <CreditCard className="w-6 h-6 text-gt-primary-container" />
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Tabs */}
       <Tabs defaultValue="mensalidades">
-        <TabsList className="mb-4">
-          <TabsTrigger value="mensalidades">Mensalidades</TabsTrigger>
-          <TabsTrigger value="conciliacao">Conciliação</TabsTrigger>
-          <TabsTrigger value="gerar">Gerar</TabsTrigger>
+        <TabsList className="mb-6 bg-gt-surface-container">
+          <TabsTrigger
+            value="mensalidades"
+            className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
+          >
+            Mensalidades
+          </TabsTrigger>
+          <TabsTrigger
+            value="conciliacao"
+            className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
+          >
+            Conciliação
+          </TabsTrigger>
+          <TabsTrigger
+            value="gerar"
+            className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
+          >
+            Gerar
+          </TabsTrigger>
         </TabsList>
+
         <TabsContent value="mensalidades">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Mensalidades Recorrentes</CardTitle>
+          <Card className="gt-card">
+            <CardHeader className="border-b border-gt-outline-variant">
+              <CardTitle className="text-lg font-bold text-gt-on-surface">
+                Mensalidades Recorrentes
+              </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
               {loading ? (
-                <p className="text-gray-500 text-center py-4">Carregando...</p>
+                <div className="p-8 text-center text-gt-outline">Carregando...</div>
               ) : mensalidades.length === 0 ? (
-                <p className="text-gray-400 text-center py-4">Nenhuma mensalidade gerada.</p>
+                <div className="p-8 text-center text-gt-outline">Nenhuma mensalidade gerada.</div>
               ) : (
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Parcela</TableHead>
-                      <TableHead>Vencimento</TableHead>
-                      <TableHead>Valor</TableHead>
-                      <TableHead>Status</TableHead>
+                    <TableRow className="border-b border-gt-outline-variant">
+                      <TableHead className="font-semibold text-gt-on-surface">Parcela</TableHead>
+                      <TableHead className="font-semibold text-gt-on-surface">Vencimento</TableHead>
+                      <TableHead className="font-semibold text-gt-on-surface">Valor</TableHead>
+                      <TableHead className="font-semibold text-gt-on-surface">Status</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {mensalidades.map((m) => (
-                      <TableRow key={m.id}>
-                        <TableCell>{m.numero_parcela}/12</TableCell>
-                        <TableCell>{new Date(m.vencimento).toLocaleDateString('pt-BR')}</TableCell>
-                        <TableCell>R$ {m.valor.toFixed(2)}</TableCell>
+                      <TableRow
+                        key={m.id}
+                        className="border-b border-gt-outline-variant hover:bg-gt-surface-container"
+                      >
+                        <TableCell className="font-medium text-gt-on-surface">
+                          {m.numero_parcela}/12
+                        </TableCell>
+                        <TableCell className="text-gt-on-surface-variant">
+                          {new Date(m.vencimento).toLocaleDateString('pt-BR')}
+                        </TableCell>
+                        <TableCell className="font-medium text-gt-on-surface">
+                          R$ {m.valor.toFixed(2)}
+                        </TableCell>
                         <TableCell>
                           <Badge className={statusBadge(m.status)}>{m.status}</Badge>
                         </TableCell>
@@ -170,41 +232,53 @@ const PainelFinanceiro = () => {
             </CardContent>
           </Card>
         </TabsContent>
+
         <TabsContent value="conciliacao">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg">Conciliação Bancária</CardTitle>
-              <Button size="sm" onClick={simularConciliacao} disabled={gerando}>
-                {gerando && <Loader2 className="w-4 h-4 animate-spin mr-2" />}Simular
+          <Card className="gt-card">
+            <CardHeader className="flex flex-row items-center justify-between border-b border-gt-outline-variant">
+              <CardTitle className="text-lg font-bold text-gt-on-surface">
+                Conciliação Bancária
+              </CardTitle>
+              <Button
+                size="sm"
+                onClick={simularConciliacao}
+                disabled={gerando}
+                className="bg-gt-primary-container hover:bg-gt-primary text-white"
+              >
+                {gerando && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                Simular
               </Button>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
               {conciliacoes.length === 0 ? (
-                <p className="text-gray-400 text-center py-4">Nenhuma conciliação.</p>
+                <div className="p-8 text-center text-gt-outline">Nenhuma conciliação.</div>
               ) : (
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Data</TableHead>
-                      <TableHead>Valor</TableHead>
-                      <TableHead>Status</TableHead>
+                    <TableRow className="border-b border-gt-outline-variant">
+                      <TableHead className="font-semibold text-gt-on-surface">Data</TableHead>
+                      <TableHead className="font-semibold text-gt-on-surface">Valor</TableHead>
+                      <TableHead className="font-semibold text-gt-on-surface">Status</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {conciliacoes.map((c) => (
-                      <TableRow key={c.id}>
-                        <TableCell>
+                      <TableRow
+                        key={c.id}
+                        className="border-b border-gt-outline-variant hover:bg-gt-surface-container"
+                      >
+                        <TableCell className="text-gt-on-surface-variant">
                           {c.data_extrato
                             ? new Date(c.data_extrato).toLocaleDateString('pt-BR')
                             : '—'}
                         </TableCell>
-                        <TableCell>R$ {c.valor_extrato.toFixed(2)}</TableCell>
+                        <TableCell className="font-medium text-gt-on-surface">
+                          R$ {c.valor_extrato.toFixed(2)}
+                        </TableCell>
                         <TableCell>
                           <Badge
                             className={
-                              c.status === 'conciliado'
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-gray-100'
+                              c.status === 'conciliado' ? 'gt-badge-green' : 'gt-badge-amber'
                             }
                           >
                             {c.status}
@@ -218,31 +292,42 @@ const PainelFinanceiro = () => {
             </CardContent>
           </Card>
         </TabsContent>
+
         <TabsContent value="gerar">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Gerar Mensalidades</CardTitle>
+          <Card className="gt-card">
+            <CardHeader className="border-b border-gt-outline-variant">
+              <CardTitle className="text-lg font-bold text-gt-on-surface">
+                Gerar Mensalidades
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="p-6 space-y-5">
               <div>
-                <Label htmlFor="mat">ID da Matrícula</Label>
+                <Label htmlFor="mat" className="text-sm font-medium text-gt-on-surface">
+                  ID da Matrícula
+                </Label>
                 <Input
                   id="mat"
                   value={matriculaId}
                   onChange={(e) => setMatriculaId(e.target.value)}
                   placeholder="ID da matrícula ativa"
+                  className="mt-1.5 border-gt-outline-variant focus:ring-gt-primary-container"
                 />
               </div>
-              <div className="bg-blue-50 rounded-lg p-4 text-sm text-gray-600">
-                <p className="font-medium mb-1">Como funciona:</p>
-                <ul className="list-disc list-inside space-y-1">
-                  <li>12 parcelas mensais geradas</li>
-                  <li>Vencimento no dia 5</li>
-                  <li>Valor: R$ 290,00/parcela</li>
+              <div className="bg-gt-surface-container rounded-lg p-4 border border-gt-outline-variant">
+                <p className="font-medium text-gt-on-surface mb-2">Como funciona:</p>
+                <ul className="text-sm text-gt-on-surface-variant space-y-1">
+                  <li>• 12 parcelas mensais geradas automaticamente</li>
+                  <li>• Vencimento no dia 5 de cada mês</li>
+                  <li>• Valor: R$ 290,00 por parcela</li>
                 </ul>
               </div>
-              <Button onClick={gerarMensalidades} disabled={gerando} className="w-full">
-                {gerando && <Loader2 className="w-4 h-4 animate-spin mr-2" />}Gerar 12 mensalidades
+              <Button
+                onClick={gerarMensalidades}
+                disabled={gerando}
+                className="w-full bg-gt-primary-container hover:bg-gt-primary text-white"
+              >
+                {gerando && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                Gerar 12 mensalidades
               </Button>
             </CardContent>
           </Card>
@@ -251,4 +336,5 @@ const PainelFinanceiro = () => {
     </div>
   )
 }
+
 export default PainelFinanceiro

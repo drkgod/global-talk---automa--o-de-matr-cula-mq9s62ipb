@@ -23,71 +23,80 @@ const PainelConsolidacao = () => {
       setTreinamentos(
         await pb.collection('treinamentos').getFullList({ sort: '-data_treinamento' }),
       )
-    } catch (_) {
-      /* dados ainda não existem */
+    } catch {
     } finally {
       setLoading(false)
     }
   }, [])
+
   useEffect(() => {
     carregar()
   }, [carregar])
 
   const statusMetrica = (s: string) =>
     ({
-      atingido: 'bg-green-100 text-green-800',
-      parcial: 'bg-amber-100 text-amber-800',
-      nao_atingido: 'bg-red-100 text-red-800',
-      em_andamento: 'bg-blue-100 text-blue-800',
-    })[s] || 'bg-gray-100'
+      atingido: 'gt-badge-green',
+      parcial: 'gt-badge-amber',
+      nao_atingido: 'gt-badge-red',
+      em_andamento: 'gt-badge-blue',
+    })[s] || 'bg-gray-100 text-gray-700'
+
   const statusTrein = (s: string) =>
     ({
-      agendado: 'bg-blue-100 text-blue-800',
-      concluido: 'bg-green-100 text-green-800',
-      cancelado: 'bg-red-100 text-red-800',
-    })[s] || 'bg-gray-100'
+      agendado: 'gt-badge-blue',
+      concluido: 'gt-badge-green',
+      cancelado: 'gt-badge-red',
+    })[s] || 'bg-gray-100 text-gray-700'
 
   return (
-    <div className="container mx-auto py-6 px-4 max-w-5xl">
-      <h1 className="text-2xl font-bold mb-2 flex items-center gap-2">
-        <Award className="w-6 h-6 text-blue-600" />
-        Consolidação e Encerramento
-      </h1>
-      <p className="text-gray-500 mb-6">Medição final, capacitação e documentação.</p>
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Target className="w-5 h-5 text-blue-600" />
+    <div className="container mx-auto py-8 px-6 max-w-6xl">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gt-on-surface flex items-center gap-3">
+          <Award className="w-8 h-8 text-gt-primary-container" />
+          Consolidação e Encerramento
+        </h1>
+        <p className="text-gt-on-surface-variant mt-1">Medição final, capacitação e documentação</p>
+      </div>
+
+      {/* Metrics */}
+      <Card className="gt-card mb-8">
+        <CardHeader className="border-b border-gt-outline-variant">
+          <CardTitle className="text-lg font-bold text-gt-on-surface flex items-center gap-2">
+            <Target className="w-5 h-5 text-gt-primary-container" />
             Métricas Finais
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {loading ? (
-            <p className="text-gray-500 text-center py-4">Carregando...</p>
+            <div className="p-8 text-center text-gt-outline">Carregando...</div>
           ) : metricas.length === 0 ? (
-            <p className="text-gray-400 text-center py-4">Nenhuma métrica registrada.</p>
+            <div className="p-8 text-center text-gt-outline">Nenhuma métrica registrada.</div>
           ) : (
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Fase</TableHead>
-                  <TableHead>Métrica</TableHead>
-                  <TableHead>Valor</TableHead>
-                  <TableHead>Meta</TableHead>
-                  <TableHead>Status</TableHead>
+                <TableRow className="border-b border-gt-outline-variant">
+                  <TableHead className="font-semibold text-gt-on-surface">Fase</TableHead>
+                  <TableHead className="font-semibold text-gt-on-surface">Métrica</TableHead>
+                  <TableHead className="font-semibold text-gt-on-surface">Valor</TableHead>
+                  <TableHead className="font-semibold text-gt-on-surface">Meta</TableHead>
+                  <TableHead className="font-semibold text-gt-on-surface">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {metricas.map((m) => (
-                  <TableRow key={m.id}>
+                  <TableRow
+                    key={m.id}
+                    className="border-b border-gt-outline-variant hover:bg-gt-surface-container"
+                  >
                     <TableCell>
-                      <Badge variant="outline">F{m.fase}</Badge>
+                      <Badge className="gt-badge-blue">F{m.fase}</Badge>
                     </TableCell>
-                    <TableCell className="font-medium">{m.nome}</TableCell>
-                    <TableCell>
+                    <TableCell className="font-medium text-gt-on-surface">{m.nome}</TableCell>
+                    <TableCell className="text-gt-on-surface">
                       {m.valor} {m.unidade}
                     </TableCell>
-                    <TableCell className="text-sm text-gray-500">{m.meta}</TableCell>
+                    <TableCell className="text-sm text-gt-on-surface-variant">{m.meta}</TableCell>
                     <TableCell>
                       <Badge className={statusMetrica(m.status)}>{m.status}</Badge>
                     </TableCell>
@@ -98,38 +107,45 @@ const PainelConsolidacao = () => {
           )}
         </CardContent>
       </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <GraduationCap className="w-5 h-5 text-blue-600" />
+
+      {/* Training */}
+      <Card className="gt-card mb-8">
+        <CardHeader className="border-b border-gt-outline-variant">
+          <CardTitle className="text-lg font-bold text-gt-on-surface flex items-center gap-2">
+            <GraduationCap className="w-5 h-5 text-gt-primary-container" />
             Capacitação da Equipe
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-gt-on-surface-variant">
             {treinamentos.filter((t) => t.status === 'concluido').length} de {treinamentos.length}{' '}
             concluídos
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {treinamentos.length === 0 ? (
-            <p className="text-gray-400 text-center py-4">Nenhum treinamento agendado.</p>
+            <div className="p-8 text-center text-gt-outline">Nenhum treinamento agendado.</div>
           ) : (
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Funcionário</TableHead>
-                  <TableHead>Papel</TableHead>
-                  <TableHead>Tópico</TableHead>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Status</TableHead>
+                <TableRow className="border-b border-gt-outline-variant">
+                  <TableHead className="font-semibold text-gt-on-surface">Funcionário</TableHead>
+                  <TableHead className="font-semibold text-gt-on-surface">Papel</TableHead>
+                  <TableHead className="font-semibold text-gt-on-surface">Tópico</TableHead>
+                  <TableHead className="font-semibold text-gt-on-surface">Data</TableHead>
+                  <TableHead className="font-semibold text-gt-on-surface">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {treinamentos.map((t) => (
-                  <TableRow key={t.id}>
-                    <TableCell className="font-medium">{t.funcionario}</TableCell>
-                    <TableCell className="capitalize">{t.papel}</TableCell>
-                    <TableCell>{t.topico}</TableCell>
-                    <TableCell>
+                  <TableRow
+                    key={t.id}
+                    className="border-b border-gt-outline-variant hover:bg-gt-surface-container"
+                  >
+                    <TableCell className="font-medium text-gt-on-surface">
+                      {t.funcionario}
+                    </TableCell>
+                    <TableCell className="capitalize text-gt-on-surface">{t.papel}</TableCell>
+                    <TableCell className="text-gt-on-surface-variant">{t.topico}</TableCell>
+                    <TableCell className="text-gt-on-surface-variant">
                       {new Date(t.data_treinamento).toLocaleDateString('pt-BR')}
                     </TableCell>
                     <TableCell>
@@ -142,17 +158,21 @@ const PainelConsolidacao = () => {
           )}
         </CardContent>
       </Card>
-      <Card className="mt-6 bg-blue-50 border-blue-200">
-        <CardContent className="pt-6">
-          <div className="flex items-start gap-3">
-            <CheckCircle2 className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" />
+
+      {/* Project Status */}
+      <Card className="gt-card bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+        <CardContent className="p-6">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
+              <CheckCircle2 className="w-6 h-6 text-green-600" />
+            </div>
             <div>
-              <p className="font-medium text-blue-900">Status do Projeto</p>
-              <p className="text-sm text-blue-700 mt-1">
+              <h3 className="font-bold text-gt-on-surface text-lg">Status do Projeto</h3>
+              <p className="text-gt-on-surface-variant mt-1">
                 Todas as 5 fases implementadas: matrícula sem redigitação, cobrança recorrente com
                 conciliação, grade de horários, escalonamento de inadimplência e consolidação.
               </p>
-              <p className="text-sm text-blue-600 mt-2">
+              <p className="text-gt-primary-container mt-2 font-medium">
                 <strong>Linha vermelha:</strong> nenhuma renegociação é automática — sempre passa
                 pela diretora.
               </p>
@@ -163,4 +183,5 @@ const PainelConsolidacao = () => {
     </div>
   )
 }
+
 export default PainelConsolidacao

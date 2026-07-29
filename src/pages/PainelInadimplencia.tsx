@@ -9,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Mail, Bell, Lock, UserCheck, TrendingDown } from 'lucide-react'
+import { Mail, Bell, Lock, UserCheck, TrendingDown, AlertTriangle } from 'lucide-react'
 import pb from '@/lib/pocketbase/client'
 
 const PainelInadimplencia = () => {
@@ -21,34 +21,36 @@ const PainelInadimplencia = () => {
     try {
       setInadimplencias(await pb.collection('inadimplencia').getFullList({ sort: '-dias_atraso' }))
       setAcoes(await pb.collection('acoes_cobranca').getFullList({ sort: '-created' }))
-    } catch (_) {
-      /* dados ainda não existem */
+    } catch {
     } finally {
       setLoading(false)
     }
   }, [])
+
   useEffect(() => {
     carregar()
   }, [carregar])
 
   const nivelBadge = (n: string) =>
     ({
-      lembrete: 'bg-blue-100 text-blue-800',
-      notificacao: 'bg-amber-100 text-amber-800',
-      bloqueio: 'bg-orange-100 text-orange-800',
-      renegociacao: 'bg-red-100 text-red-800',
-      cobranca_inicial: 'bg-blue-100 text-blue-800',
-      reenvio_3d: 'bg-amber-100 text-amber-800',
-      escala_15d_diretoria: 'bg-red-100 text-red-800',
-    })[n] || 'bg-gray-100'
+      lembrete: 'gt-badge-blue',
+      notificacao: 'gt-badge-amber',
+      bloqueio: 'bg-orange-100 text-orange-700',
+      renegociacao: 'gt-badge-red',
+      cobranca_inicial: 'gt-badge-blue',
+      reenvio_3d: 'gt-badge-amber',
+      escala_15d_diretoria: 'gt-badge-red',
+    })[n] || 'bg-gray-100 text-gray-700'
+
   const statusBadge = (s: string) =>
     ({
-      ativo: 'bg-red-100 text-red-800',
-      resolvido: 'bg-green-100 text-green-800',
-      renegociado: 'bg-blue-100 text-blue-800',
-      encaminhado_diretoria: 'bg-purple-100 text-purple-800',
-      escalado_diretoria: 'bg-purple-100 text-purple-800',
-    })[s] || 'bg-gray-100'
+      ativo: 'gt-badge-red',
+      resolvido: 'gt-badge-green',
+      renegociado: 'gt-badge-blue',
+      encaminhado_diretoria: 'gt-badge-purple',
+      escalado_diretoria: 'gt-badge-purple',
+    })[s] || 'bg-gray-100 text-gray-700'
+
   const totalDevido = inadimplencias
     .filter(
       (i) =>
@@ -58,85 +60,134 @@ const PainelInadimplencia = () => {
     )
     .reduce((s, i) => s + i.valor_devido, 0)
 
+  const niveis = [
+    { n: 'lembrete', d: '1-7 dias', i: Mail, c: 'text-blue-600', bg: 'bg-blue-100' },
+    { n: 'notificacao', d: '8-15 dias', i: Bell, c: 'text-amber-600', bg: 'bg-amber-100' },
+    { n: 'bloqueio', d: '16-30 dias', i: Lock, c: 'text-orange-600', bg: 'bg-orange-100' },
+    { n: 'renegociacao', d: '30+ dias', i: UserCheck, c: 'text-red-600', bg: 'bg-red-100' },
+  ]
+
   return (
-    <div className="container mx-auto py-6 px-4 max-w-5xl">
-      <h1 className="text-2xl font-bold mb-6 flex items-center gap-2">
-        <TrendingDown className="w-6 h-6 text-red-600" />
-        Inadimplência
-      </h1>
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm text-gray-500">Total devido</p>
-            <p className="text-2xl font-bold text-red-600">R$ {totalDevido.toFixed(2)}</p>
+    <div className="container mx-auto py-8 px-6 max-w-6xl">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gt-on-surface flex items-center gap-3">
+          <TrendingDown className="w-8 h-8 text-red-600" />
+          Inadimplência
+        </h1>
+        <p className="text-gt-on-surface-variant mt-1">
+          Acompanhe e gerencie casos de inadimplência
+        </p>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <Card className="gt-card">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gt-outline">Total devido</p>
+                <p className="text-3xl font-bold text-red-600">R$ {totalDevido.toFixed(2)}</p>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
+              </div>
+            </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm text-gray-500">Casos ativos</p>
-            <p className="text-2xl font-bold text-amber-600">
-              {inadimplencias.filter((i) => i.status === 'ativo').length}
-            </p>
+
+        <Card className="gt-card">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gt-outline">Casos ativos</p>
+                <p className="text-3xl font-bold text-amber-600">
+                  {inadimplencias.filter((i) => i.status === 'ativo').length}
+                </p>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center">
+                <Bell className="w-6 h-6 text-amber-600" />
+              </div>
+            </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm text-gray-500">Diretoria</p>
-            <p className="text-2xl font-bold text-purple-600">
-              {
-                inadimplencias.filter(
-                  (i) => i.status === 'encaminhado_diretoria' || i.status === 'escalado_diretoria',
-                ).length
-              }
-            </p>
+
+        <Card className="gt-card">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gt-outline">Diretoria</p>
+                <p className="text-3xl font-bold text-purple-600">
+                  {
+                    inadimplencias.filter(
+                      (i) =>
+                        i.status === 'encaminhado_diretoria' || i.status === 'escalado_diretoria',
+                    ).length
+                  }
+                </p>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center">
+                <UserCheck className="w-6 h-6 text-purple-600" />
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-lg">Níveis de Escalonamento</CardTitle>
+
+      {/* Escalation Levels */}
+      <Card className="gt-card mb-8">
+        <CardHeader className="border-b border-gt-outline-variant">
+          <CardTitle className="text-lg font-bold text-gt-on-surface">
+            Níveis de Escalonamento
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-4 gap-3">
-            {[
-              { n: 'lembrete', d: '1-7 dias', i: Mail, c: 'text-blue-600' },
-              { n: 'notificacao', d: '8-15 dias', i: Bell, c: 'text-amber-600' },
-              { n: 'bloqueio', d: '16-30 dias', i: Lock, c: 'text-orange-600' },
-              { n: 'renegociacao', d: '30+ dias', i: UserCheck, c: 'text-red-600' },
-            ].map((n) => (
-              <div key={n.n} className="border rounded-lg p-3">
-                <n.i className={`w-5 h-5 ${n.c} mb-1`} />
-                <p className="font-medium text-sm">{n.n}</p>
-                <p className="text-xs text-gray-500">{n.d}</p>
+        <CardContent className="p-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {niveis.map((n) => (
+              <div key={n.n} className={`rounded-xl p-4 border border-gt-outline-variant ${n.bg}`}>
+                <n.i className={`w-6 h-6 ${n.c} mb-2`} />
+                <p className="font-semibold text-gt-on-surface capitalize">{n.n}</p>
+                <p className="text-sm text-gt-on-surface-variant">{n.d}</p>
               </div>
             ))}
           </div>
         </CardContent>
       </Card>
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-lg">Casos de Inadimplência</CardTitle>
+
+      {/* Cases Table */}
+      <Card className="gt-card mb-8">
+        <CardHeader className="border-b border-gt-outline-variant">
+          <CardTitle className="text-lg font-bold text-gt-on-surface">
+            Casos de Inadimplência
+          </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {loading ? (
-            <p className="text-gray-500 text-center py-4">Carregando...</p>
+            <div className="p-8 text-center text-gt-outline">Carregando...</div>
           ) : inadimplencias.length === 0 ? (
-            <p className="text-gray-400 text-center py-4">Nenhum caso registrado.</p>
+            <div className="p-8 text-center text-gt-outline">Nenhum caso registrado.</div>
           ) : (
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Dias atraso</TableHead>
-                  <TableHead>Valor</TableHead>
-                  <TableHead>Nível</TableHead>
-                  <TableHead>Status</TableHead>
+                <TableRow className="border-b border-gt-outline-variant">
+                  <TableHead className="font-semibold text-gt-on-surface">Dias atraso</TableHead>
+                  <TableHead className="font-semibold text-gt-on-surface">Valor</TableHead>
+                  <TableHead className="font-semibold text-gt-on-surface">Nível</TableHead>
+                  <TableHead className="font-semibold text-gt-on-surface">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {inadimplencias.map((i) => (
-                  <TableRow key={i.id}>
-                    <TableCell className="font-medium">{i.dias_atraso} dias</TableCell>
-                    <TableCell>R$ {i.valor_devido.toFixed(2)}</TableCell>
+                  <TableRow
+                    key={i.id}
+                    className="border-b border-gt-outline-variant hover:bg-gt-surface-container"
+                  >
+                    <TableCell className="font-medium text-gt-on-surface">
+                      {i.dias_atraso} dias
+                    </TableCell>
+                    <TableCell className="font-medium text-gt-on-surface">
+                      R$ {i.valor_devido.toFixed(2)}
+                    </TableCell>
                     <TableCell>
                       <Badge className={nivelBadge(i.nivel_escalonamento)}>
                         {i.nivel_escalonamento}
@@ -152,28 +203,37 @@ const PainelInadimplencia = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Actions History */}
       {acoes.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Histórico de Ações</CardTitle>
+        <Card className="gt-card">
+          <CardHeader className="border-b border-gt-outline-variant">
+            <CardTitle className="text-lg font-bold text-gt-on-surface">
+              Histórico de Ações
+            </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Descrição</TableHead>
-                  <TableHead>Data</TableHead>
+                <TableRow className="border-b border-gt-outline-variant">
+                  <TableHead className="font-semibold text-gt-on-surface">Tipo</TableHead>
+                  <TableHead className="font-semibold text-gt-on-surface">Descrição</TableHead>
+                  <TableHead className="font-semibold text-gt-on-surface">Data</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {acoes.map((a) => (
-                  <TableRow key={a.id}>
+                  <TableRow
+                    key={a.id}
+                    className="border-b border-gt-outline-variant hover:bg-gt-surface-container"
+                  >
                     <TableCell>
-                      <Badge variant="outline">{a.tipo_acao}</Badge>
+                      <Badge variant="outline" className="border-gt-outline-variant">
+                        {a.tipo_acao}
+                      </Badge>
                     </TableCell>
-                    <TableCell className="text-sm">{a.descricao}</TableCell>
-                    <TableCell className="text-xs text-gray-400">
+                    <TableCell className="text-sm text-gt-on-surface">{a.descricao}</TableCell>
+                    <TableCell className="text-sm text-gt-outline">
                       {new Date(a.created).toLocaleString('pt-BR')}
                     </TableCell>
                   </TableRow>
@@ -186,4 +246,5 @@ const PainelInadimplencia = () => {
     </div>
   )
 }
+
 export default PainelInadimplencia

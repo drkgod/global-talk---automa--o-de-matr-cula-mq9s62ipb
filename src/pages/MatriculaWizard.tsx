@@ -751,7 +751,6 @@ const MatriculaWizard = () => {
             </Button>
           )}
         </div>
-
         {currentStep === 1 && (
           <Button
             onClick={avancarFormulario}
@@ -818,6 +817,16 @@ const MatriculaWizard = () => {
             Avançar para pagamento <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         )}
+        {currentStep === 4 && !contratoConteudo && (
+          <Button
+            onClick={gerarContrato}
+            disabled={loading}
+            className="bg-gt-primary-container hover:bg-gt-primary text-white"
+          >
+            {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+            Gerar contrato <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
+        )}{' '}
         {currentStep === 5 && !pagamentoResult && (
           <Button
             onClick={confirmarPagamento}

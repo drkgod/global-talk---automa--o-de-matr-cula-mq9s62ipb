@@ -26,7 +26,7 @@ const CoordenadoraPainel = () => {
       const m = await pb.collection('matriculas').getFullList({ sort: '-created' })
       setMatriculas(m)
     } catch {
-     \/\* dados ainda nao existem \*\/
+      // ok
     } finally {
       setLoading(false)
     }

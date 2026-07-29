@@ -70,7 +70,7 @@ const MatriculaWizard = () => {
       try {
         setForm(JSON.parse(saved))
       } catch {
-       \/\* dados ainda nao existem \*\/
+        // ok
         /* ignora JSON inválido */
       }
     }

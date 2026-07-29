@@ -24,7 +24,7 @@ const PainelConsolidacao = () => {
         await pb.collection('treinamentos').getFullList({ sort: '-data_treinamento' }),
       )
     } catch {
-     \/\* dados ainda nao existem \*\/
+      // ok
     } finally {
       setLoading(false)
     }

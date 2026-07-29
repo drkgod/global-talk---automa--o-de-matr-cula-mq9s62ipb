@@ -22,7 +22,7 @@ const PainelInadimplencia = () => {
       setInadimplencias(await pb.collection('inadimplencia').getFullList({ sort: '-dias_atraso' }))
       setAcoes(await pb.collection('acoes_cobranca').getFullList({ sort: '-created' }))
     } catch {
-     \/\* dados ainda nao existem \*\/
+      // ok
     } finally {
       setLoading(false)
     }

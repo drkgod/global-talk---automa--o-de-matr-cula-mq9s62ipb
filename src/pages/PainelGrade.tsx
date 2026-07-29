@@ -10,7 +10,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Input, Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
 import { Calendar, Users, AlertTriangle, Loader2 } from 'lucide-react'
 import pb from '@/lib/pocketbase/client'

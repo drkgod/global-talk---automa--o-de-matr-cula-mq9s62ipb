@@ -69,7 +69,9 @@ const MatriculaWizard = () => {
     if (saved) {
       try {
         setForm(JSON.parse(saved))
-      } catch {}
+      } catch {
+        /* ignora JSON inválido */
+      }
     }
     carregarQuestoes()
   }, [])

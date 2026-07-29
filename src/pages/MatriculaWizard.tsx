@@ -499,26 +499,32 @@ const MatriculaWizard = () => {
                           {i + 1}. {q.enunciado}
                         </Label>
                         <div className="space-y-2">
-                          {(q.alternativas || []).map((alt: string, j: number) => (
-                            <label
-                              key={j}
-                              className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
-                                respostas[q.id] === alt
-                                  ? 'border-gt-primary-container bg-blue-50'
-                                  : 'border-gt-outline-variant hover:bg-gt-surface-container'
-                              }`}
-                            >
-                              <input
-                                type="radio"
-                                name={q.id}
-                                value={alt}
-                                checked={respostas[q.id] === alt}
-                                onChange={(e) => updateResposta(q.id, e.target.value)}
-                                className="w-4 h-4"
-                              />
-                              <span className="text-sm">{alt}</span>
-                            </label>
-                          ))}
+                          {['a', 'b', 'c', 'd'].map((key) => {
+                            const alt = q['opcao_' + key]
+                            if (!alt) {
+                              return null
+                            }
+                            return (
+                              <label
+                                key={key}
+                                className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                                  respostas[q.id] === key
+                                    ? 'border-gt-primary-container bg-blue-50'
+                                    : 'border-gt-outline-variant hover:bg-gt-surface-container'
+                                }`}
+                              >
+                                <input
+                                  type="radio"
+                                  name={q.id}
+                                  value={key}
+                                  checked={respostas[q.id] === key}
+                                  onChange={(e) => updateResposta(q.id, e.target.value)}
+                                  className="w-4 h-4"
+                                />
+                                <span className="text-sm">{alt}</span>
+                              </label>
+                            )
+                          })}
                         </div>
                       </div>
                     ))

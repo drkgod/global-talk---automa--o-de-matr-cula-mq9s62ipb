@@ -21,8 +21,6 @@ import {
   Download,
   AlertTriangle,
   Info,
-  User,
-  Clock,
 } from 'lucide-react'
 import pb from '@/lib/pocketbase/client'
 
@@ -60,7 +58,6 @@ const MatriculaWizard = () => {
   const [loading, setLoading] = useState(false)
   const [matriculaId, setMatriculaId] = useState('')
 
-  // Step 1: Form
   const [form, setForm] = useState({
     nome: '',
     cpf: '',
@@ -70,45 +67,38 @@ const MatriculaWizard = () => {
     horario_pretendido: '19:00',
   })
 
-  // Step 2: Prova
   const [questoes, setQuestoes] = useState<any[]>([])
   const [respostas, setRespostas] = useState<Record<string, string>>({})
   const [provaResult, setProvaResult] = useState<ProvaResult | null>(null)
 
-  // Step 3: Importação
   const [pacoteId, setPacoteId] = useState('')
   const [pacoteDados, setPacoteDados] = useState<any>(null)
   const [uploadStatus, setUploadStatus] = useState('')
 
-  // Step 4: Contrato
   const [contratoConteudo, setContratoConteudo] = useState('')
   const [contratoId, setContratoId] = useState('')
 
-  // Step 5: Pagamento
   const [valorPago, setValorPago] = useState('290')
   const [nomePagador, setNomePagador] = useState('')
   const [pagamentoResult, setPagamentoResult] = useState<PagamentoResult | null>(null)
 
-  // Load form from localStorage
   useEffect(() => {
     const saved = localStorage.getItem('matricula_draft')
     if (saved) {
       try {
         setForm(JSON.parse(saved))
       } catch {
-        // ok
+        /* ok */
       }
     }
   }, [])
 
-  // Auto-save form
   useEffect(() => {
     if (!offline && form.nome) {
       localStorage.setItem('matricula_draft', JSON.stringify(form))
     }
   }, [form, offline])
 
-  // Load questoes when entering step 2
   const carregarQuestoes = useCallback(async () => {
     if (questoes.length > 0) {
       return
@@ -117,7 +107,7 @@ const MatriculaWizard = () => {
       const qs = await pb.collection('questoes_prova').getFullList({ sort: 'ordem' })
       setQuestoes(qs)
     } catch {
-      // ok
+      /* ok */
     }
   }, [questoes.length])
 
@@ -138,7 +128,6 @@ const MatriculaWizard = () => {
     }
   }
 
-  // Step 1: Save form to PocketBase
   const avancarFormulario = async () => {
     if (!form.nome || !form.cpf) {
       toast.error('Preencha pelo menos nome e CPF')
@@ -172,7 +161,6 @@ const MatriculaWizard = () => {
     }
   }
 
-  // Step 2: Save answers and correct prova
   const avancarProva = async () => {
     const todasRespondidas = questoes.every((q) => respostas[q.id])
     if (!todasRespondidas) {
@@ -181,7 +169,6 @@ const MatriculaWizard = () => {
     }
     setLoading(true)
     try {
-      // Save answers
       for (const q of questoes) {
         await pb.collection('prova_respostas').create({
           matricula_id: matriculaId,
@@ -189,7 +176,6 @@ const MatriculaWizard = () => {
           resposta: respostas[q.id],
         })
       }
-      // Correct
       const result = await pb.send('/backend/v1/prova/corrigir', {
         method: 'POST',
         body: { matricula_id: matriculaId },
@@ -210,11 +196,9 @@ const MatriculaWizard = () => {
     }
   }
 
-  // Step 3: Generate and upload import package
   const processarImportacao = async (simularIndisponivel = false) => {
     setLoading(true)
     try {
-      // Generate package
       const gerarRes = await pb.send('/backend/v1/importacao/gerar', {
         method: 'POST',
         body: { matricula_id: matriculaId },
@@ -223,7 +207,6 @@ const MatriculaWizard = () => {
       setPacoteDados(gerarRes.dados)
       toast.success('Pacote de importação gerado!')
 
-      // Upload
       const uploadRes = await pb.send('/backend/v1/importacao/upload', {
         method: 'POST',
         body: {
@@ -248,7 +231,6 @@ const MatriculaWizard = () => {
     }
   }
 
-  // Step 4: Generate contract
   const gerarContrato = async () => {
     setLoading(true)
     try {
@@ -272,7 +254,6 @@ const MatriculaWizard = () => {
     }
   }
 
-  // Step 5: Confirm payment
   const confirmarPagamento = async () => {
     if (!valorPago || !nomePagador) {
       toast.error('Preencha valor e nome do pagador')
@@ -324,9 +305,18 @@ const MatriculaWizard = () => {
       avancado: 'Avançado',
     })[n] || n
 
+  // Helper to get alternative options from a question
+  const getAlternativas = (q: any) => {
+    const opts: { key: string; label: string }[] = []
+    if (q.opcao_a) opts.push({ key: 'a', label: q.opcao_a })
+    if (q.opcao_b) opts.push({ key: 'b', label: q.opcao_b })
+    if (q.opcao_c) opts.push({ key: 'c', label: q.opcao_c })
+    if (q.opcao_d) opts.push({ key: 'd', label: q.opcao_d })
+    return opts
+  }
+
   return (
     <div className="container mx-auto py-8 px-6 max-w-4xl">
-      {/* Stepper */}
       <div className="mb-8">
         <div className="flex items-center justify-between relative">
           <div className="absolute top-5 left-0 right-0 h-1 bg-gt-outline-variant rounded-full mx-12">
@@ -338,13 +328,14 @@ const MatriculaWizard = () => {
           {steps.map((step) => (
             <div key={step.num} className="relative z-10 flex flex-col items-center">
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
+                className={cn(
+                  'w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300',
                   currentStep > step.num
                     ? 'bg-green-500 text-white'
                     : currentStep === step.num
                       ? 'bg-gt-primary-container text-white shadow-lg scale-110'
-                      : 'bg-gt-surface-container text-gt-outline border-2 border-gt-outline-variant'
-                }`}
+                      : 'bg-gt-surface-container text-gt-outline border-2 border-gt-outline-variant',
+                )}
               >
                 {currentStep > step.num ? (
                   <CheckCircle2 className="w-5 h-5" />
@@ -362,7 +353,6 @@ const MatriculaWizard = () => {
         </div>
       </div>
 
-      {/* Step Content */}
       <Card className="gt-card">
         <CardHeader className="border-b border-gt-outline-variant">
           <CardTitle className="text-xl font-bold text-gt-on-surface flex items-center gap-3">
@@ -374,7 +364,6 @@ const MatriculaWizard = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6">
-          {/* STEP 1: Formulário */}
           {currentStep === 1 && (
             <div className="space-y-5 animate-fade-in">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -452,7 +441,6 @@ const MatriculaWizard = () => {
             </div>
           )}
 
-          {/* STEP 2: Prova */}
           {currentStep === 2 && (
             <div className="space-y-6 animate-fade-in">
               {provaResult ? (
@@ -493,48 +481,47 @@ const MatriculaWizard = () => {
                   {questoes.length === 0 ? (
                     <div className="text-center py-8 text-gt-outline">Carregando questões...</div>
                   ) : (
-                    questoes.map((q, i) => (
-                      <div key={q.id} className="space-y-2">
-                        <Label className="text-sm font-medium text-gt-on-surface">
-                          {i + 1}. {q.enunciado}
-                        </Label>
-                        <div className="space-y-2">
-                          {['a', 'b', 'c', 'd'].map((key) => {
-                            const alt = q['opcao_' + key]
-                            if (!alt) {
-                              return null
-                            }
-                            return (
+                    questoes.map((q, i) => {
+                      const alternativas = getAlternativas(q)
+                      return (
+                        <div key={q.id} className="space-y-2">
+                          <Label className="text-sm font-medium text-gt-on-surface">
+                            {i + 1}. {q.enunciado}
+                          </Label>
+                          <div className="space-y-2">
+                            {alternativas.map((alt) => (
                               <label
-                                key={key}
-                                className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
-                                  respostas[q.id] === key
+                                key={alt.key}
+                                className={cn(
+                                  'flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all',
+                                  respostas[q.id] === alt.key
                                     ? 'border-gt-primary-container bg-blue-50'
-                                    : 'border-gt-outline-variant hover:bg-gt-surface-container'
-                                }`}
+                                    : 'border-gt-outline-variant hover:bg-gt-surface-container',
+                                )}
                               >
                                 <input
                                   type="radio"
                                   name={q.id}
-                                  value={key}
-                                  checked={respostas[q.id] === key}
+                                  value={alt.key}
+                                  checked={respostas[q.id] === alt.key}
                                   onChange={(e) => updateResposta(q.id, e.target.value)}
                                   className="w-4 h-4"
                                 />
-                                <span className="text-sm">{alt}</span>
+                                <span className="text-sm">
+                                  {alt.key.toUpperCase()}) {alt.label}
+                                </span>
                               </label>
-                            )
-                          })}
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    ))
+                      )
+                    })
                   )}
                 </>
               )}
             </div>
           )}
 
-          {/* STEP 3: Importação */}
           {currentStep === 3 && (
             <div className="space-y-5 animate-fade-in">
               {pacoteDados && uploadStatus === 'confirmado' ? (
@@ -579,7 +566,6 @@ const MatriculaWizard = () => {
             </div>
           )}
 
-          {/* STEP 4: Contrato */}
           {currentStep === 4 && (
             <div className="space-y-5 animate-fade-in">
               {contratoConteudo ? (
@@ -609,7 +595,6 @@ const MatriculaWizard = () => {
             </div>
           )}
 
-          {/* STEP 5: Pagamento */}
           {currentStep === 5 && (
             <div className="space-y-5 animate-fade-in">
               {pagamentoResult && pagamentoResult.ativada ? (
@@ -676,7 +661,6 @@ const MatriculaWizard = () => {
             </div>
           )}
 
-          {/* STEP 6: Confirmação */}
           {currentStep === 6 && (
             <div className="space-y-6 animate-fade-in">
               <div className="text-center py-4">
@@ -749,7 +733,6 @@ const MatriculaWizard = () => {
         </CardContent>
       </Card>
 
-      {/* Navigation */}
       <div className="flex justify-between mt-6">
         <div className="flex gap-3">
           {currentStep > 1 && currentStep < 6 && (
@@ -866,6 +849,10 @@ const MatriculaWizard = () => {
       </div>
     </div>
   )
+}
+
+function cn(...classes: (string | false | null | undefined)[]) {
+  return classes.filter(Boolean).join(' ')
 }
 
 export default MatriculaWizard

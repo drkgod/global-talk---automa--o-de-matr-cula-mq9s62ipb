@@ -90,9 +90,9 @@ const MatriculaWizard = () => {
         setRespostaAluno({ ...p })
       }
     } catch {
-       \/\* dados ainda nao existem \*\/
+      // ok
     } finally {
-         \/\* noop \*\/
+      // noop
     }
   }, [])
 

@@ -42,7 +42,6 @@ const CoordenadoraPainel = () => {
       toast.success('Notificação marcada como lida')
       carregar()
     } catch {
-     \/\* dados ainda nao existem \*\/
       toast.error('Erro ao atualizar')
     }
   }

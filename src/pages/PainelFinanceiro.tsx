@@ -31,6 +31,7 @@ const PainelFinanceiro = () => {
       const c = await pb.collection('conciliacao_bancaria').getFullList({ sort: '-created' })
       setConciliacoes(c)
     } catch {
+     \/\* dados ainda nao existem \*\/
     } finally {
       setLoading(false)
     }

@@ -28,6 +28,7 @@ const PainelGrade = () => {
       setProfessores(await pb.collection('professores').getFullList({ sort: 'nome' }))
       setAlocacoes(await pb.collection('alocacao_professores').getFullList({ sort: 'dia_semana' }))
     } catch {
+     \/\* dados ainda nao existem \*\/
     } finally {
       setLoading(false)
     }

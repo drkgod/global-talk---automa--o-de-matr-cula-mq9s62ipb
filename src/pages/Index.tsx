@@ -1,163 +1,255 @@
 import { Link } from 'react-router-dom'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
-  FileText,
+  UserPlus,
   Receipt,
   Calendar,
-  TrendingDown,
-  Award,
+  AlertTriangle,
+  TrendingUp,
   ArrowRight,
+  Clock,
+  CheckCircle2,
+  Users,
   GraduationCap,
+  DollarSign,
+  Bell,
 } from 'lucide-react'
 
-const fases = [
+const stats = [
   {
-    num: 1,
-    titulo: 'Matrícula sem redigitação',
-    icon: FileText,
-    rota: '/matricula',
-    cta: 'Iniciar',
-    desc: 'Formulário, prova, contrato, pagamento e notificação — sem redigitação.',
-    cor: 'bg-blue-600',
+    label: 'Matrículas ativas',
+    value: '47',
+    icon: Users,
+    color: 'text-blue-600',
+    bg: 'bg-blue-50',
   },
   {
-    num: 2,
-    titulo: 'Cobrança e conciliação',
-    icon: Receipt,
-    rota: '/financeiro',
-    cta: 'Configurar',
-    desc: 'Boletos recorrentes, lembretes e conciliação bancária automática.',
-    cor: 'bg-emerald-600',
+    label: 'A receber',
+    value: 'R$ 8.410',
+    icon: DollarSign,
+    color: 'text-amber-600',
+    bg: 'bg-amber-50',
   },
+  { label: 'Pendentes', value: '3', icon: Clock, color: 'text-orange-600', bg: 'bg-orange-50' },
   {
-    num: 3,
-    titulo: 'Grade de horários',
-    icon: Calendar,
-    rota: '/grade',
-    cta: 'Gerenciar',
-    desc: 'Geração semanal da grade com detecção de conflitos de professor.',
-    cor: 'bg-violet-600',
-  },
-  {
-    num: 4,
-    titulo: 'Escalonamento de inadimplência',
-    icon: TrendingDown,
-    rota: '/inadimplencia',
-    cta: 'Acompanhar',
-    desc: 'Escalonamento automático em 4 níveis. Renegociação pela diretora.',
-    cor: 'bg-amber-600',
-  },
-  {
-    num: 5,
-    titulo: 'Consolidação e encerramento',
-    icon: Award,
-    rota: '/consolidacao',
-    cta: 'Visualizar',
-    desc: 'Métricas finais, capacitação da equipe e documentação.',
-    cor: 'bg-rose-600',
+    label: 'Inadimplentes',
+    value: '2',
+    icon: AlertTriangle,
+    color: 'text-red-600',
+    bg: 'bg-red-50',
   },
 ]
 
+const acoesRapidas = [
+  {
+    label: 'Nova Matrícula',
+    desc: 'Cadastrar aluno',
+    icon: UserPlus,
+    rota: '/matricula',
+    cor: 'bg-blue-600',
+  },
+  {
+    label: 'Financeiro',
+    desc: 'Mensalidades e cobranças',
+    icon: Receipt,
+    rota: '/financeiro',
+    cor: 'bg-emerald-600',
+  },
+  {
+    label: 'Grade de Horários',
+    desc: 'Alocar professores',
+    icon: Calendar,
+    rota: '/grade',
+    cor: 'bg-violet-600',
+  },
+  {
+    label: 'Inadimplência',
+    desc: 'Acompanhar atrasos',
+    icon: AlertTriangle,
+    rota: '/inadimplencia',
+    cor: 'bg-amber-600',
+  },
+]
+
+const atividadeRecente = [
+  {
+    aluno: 'Maria Silva',
+    ação: 'Matrícula confirmada',
+    curso: 'Inglês — 19:00',
+    status: 'confirmada',
+    tempo: '2min atrás',
+  },
+  {
+    aluno: 'João Santos',
+    ação: 'Pagamento recebido',
+    curso: 'Espanhol — 14:00',
+    status: 'pago',
+    tempo: '15min atrás',
+  },
+  {
+    aluno: 'Ana Oliveira',
+    ação: 'Prova de nivelamento',
+    curso: 'Francês — 10:00',
+    status: 'pendente',
+    tempo: '1h atrás',
+  },
+  {
+    aluno: 'Carlos Lima',
+    ação: 'Atraso 12 dias',
+    curso: 'Inglês — 19:00',
+    status: 'atrasado',
+    tempo: '3h atrás',
+  },
+  {
+    aluno: 'Lucia Ferreira',
+    ação: 'Matrícula confirmada',
+    curso: 'Alemão — 08:00',
+    status: 'confirmada',
+    tempo: '5h atrás',
+  },
+]
+
+const statusColors: Record<string, string> = {
+  confirmada: 'gt-badge-green',
+  pago: 'gt-badge-green',
+  pendente: 'gt-badge-amber',
+  atrasado: 'gt-badge-red',
+}
+
 const Index = () => (
-  <div className="container mx-auto py-12 px-6 max-w-5xl">
-    {/* Hero Section */}
-    <div className="text-center mb-12 animate-fade-in-up">
-      <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gt-primary-container mb-6 shadow-lg">
-        <GraduationCap className="w-8 h-8 text-white" />
+  <div className="container mx-auto py-8 px-6 max-w-7xl">
+    {/* Header */}
+    <div className="flex items-center justify-between mb-8">
+      <div>
+        <h1 className="text-3xl font-bold text-gt-on-surface">Dashboard</h1>
+        <p className="text-gt-on-surface-variant mt-1">Visão geral da operação</p>
       </div>
-      <h1 className="text-4xl md:text-5xl font-bold text-gt-on-surface mb-4 tracking-tight">
-        Global Talk
-      </h1>
-      <h2 className="text-2xl md:text-3xl font-semibold text-gt-primary-container mb-4">
-        Automação de Matrícula
-      </h2>
-      <p className="text-lg text-gt-on-surface-variant max-w-2xl mx-auto leading-relaxed">
-        Cinco fases implementadas ponta a ponta. Reduzir o tempo de matrícula de 40 para menos de 15
-        minutos.
-      </p>
+      <div className="flex items-center gap-3">
+        <Button variant="outline" size="sm" className="border-gt-outline-variant">
+          <Bell className="w-4 h-4 mr-2" />
+          <Badge className="gt-badge-red ml-1">2</Badge>
+        </Button>
+        <Link to="/matricula">
+          <Button size="sm" className="bg-gt-primary-container hover:bg-gt-primary text-white">
+            <UserPlus className="w-4 h-4 mr-2" />
+            Nova Matrícula
+          </Button>
+        </Link>
+      </div>
     </div>
 
-    {/* Phase Cards */}
-    <div className="space-y-4 mb-12">
-      {fases.map((f, index) => (
-        <Card
-          key={f.num}
-          className="gt-card animate-fade-in-up"
-          style={{ animationDelay: `${index * 100}ms` }}
-        >
-          <CardContent className="p-6">
+    {/* Stats Grid */}
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      {stats.map((s) => (
+        <Card key={s.label} className="gt-card">
+          <CardContent className="p-5">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-5">
-                {/* Icon */}
-                <div
-                  className={`w-14 h-14 rounded-xl ${f.cor} flex items-center justify-center flex-shrink-0 shadow-md`}
-                >
-                  <f.icon className="w-7 h-7 text-white" />
-                </div>
-
-                {/* Content */}
-                <div>
-                  <div className="flex items-center gap-3 mb-1">
-                    <Badge className="gt-badge-blue">Fase {f.num}</Badge>
-                    <h3 className="text-lg font-bold text-gt-on-surface">{f.titulo}</h3>
-                  </div>
-                  <p className="text-sm text-gt-on-surface-variant">{f.desc}</p>
-                </div>
+              <div>
+                <p className="text-sm font-medium text-gt-outline">{s.label}</p>
+                <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
               </div>
-
-              {/* CTA Button */}
-              <Link to={f.rota} className="hidden sm:block">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-gt-outline-variant text-gt-primary hover:bg-gt-surface-container"
-                >
-                  {f.cta}
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </Link>
+              <div className={`w-11 h-11 rounded-xl ${s.bg} flex items-center justify-center`}>
+                <s.icon className={`w-5 h-5 ${s.color}`} />
+              </div>
             </div>
-
-            {/* Mobile CTA */}
-            <Link to={f.rota} className="sm:hidden mt-4 block">
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full border-gt-outline-variant text-gt-primary"
-              >
-                {f.cta}
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </Link>
           </CardContent>
         </Card>
       ))}
     </div>
 
-    {/* Bottom Actions */}
-    <div
-      className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up"
-      style={{ animationDelay: '500ms' }}
-    >
-      <Link to="/matricula">
-        <Button
-          size="lg"
-          className="bg-gt-primary-container hover:bg-gt-primary text-white shadow-lg px-8"
-        >
-          Iniciar Nova Matrícula
-          <ArrowRight className="w-5 h-5 ml-2" />
-        </Button>
-      </Link>
-      <Link to="/fases">
-        <Button
-          size="lg"
-          variant="outline"
-          className="border-gt-outline-variant text-gt-on-surface px-8"
-        >
-          Ver Painel de Fases
-        </Button>
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Quick Actions */}
+      <div className="lg:col-span-1">
+        <Card className="gt-card">
+          <CardHeader className="border-b border-gt-outline-variant pb-3">
+            <CardTitle className="text-base font-bold text-gt-on-surface">Ações Rápidas</CardTitle>
+          </CardHeader>
+          <CardContent className="p-3">
+            <div className="space-y-2">
+              {acoesRapidas.map((a) => (
+                <Link key={a.rota} to={a.rota}>
+                  <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gt-surface-container transition-colors cursor-pointer group">
+                    <div
+                      className={`w-10 h-10 rounded-lg ${a.cor} flex items-center justify-center flex-shrink-0`}
+                    >
+                      <a.icon className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gt-on-surface group-hover:text-gt-primary-container transition-colors">
+                        {a.label}
+                      </p>
+                      <p className="text-xs text-gt-outline truncate">{a.desc}</p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-gt-outline group-hover:text-gt-primary-container transition-colors" />
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Recent Activity */}
+      <div className="lg:col-span-2">
+        <Card className="gt-card">
+          <CardHeader className="border-b border-gt-outline-variant pb-3 flex flex-row items-center justify-between">
+            <CardTitle className="text-base font-bold text-gt-on-surface">
+              Atividade Recente
+            </CardTitle>
+            <Button variant="ghost" size="sm" className="text-gt-primary-container text-xs">
+              Ver tudo
+              <ArrowRight className="w-3 h-3 ml-1" />
+            </Button>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="divide-y divide-gt-outline-variant">
+              {atividadeRecente.map((item, i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between px-5 py-4 hover:bg-gt-surface-container transition-colors"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-gt-surface-container flex items-center justify-center flex-shrink-0">
+                      <GraduationCap className="w-5 h-5 text-gt-outline" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gt-on-surface">{item.aluno}</p>
+                      <p className="text-xs text-gt-outline">
+                        {item.ação} — {item.curso}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right flex-shrink-0 ml-4">
+                    <Badge className={statusColors[item.status]}>{item.status}</Badge>
+                    <p className="text-xs text-gt-outline mt-1">{item.tempo}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+
+    {/* Coordinator Link */}
+    <div className="mt-6">
+      <Link to="/coordenadora">
+        <Card className="gt-card hover:shadow-card-hover transition-shadow cursor-pointer">
+          <CardContent className="p-5 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center">
+                <Bell className="w-6 h-6 text-indigo-600" />
+              </div>
+              <div>
+                <p className="font-bold text-gt-on-surface">Painel da Coordenadora</p>
+                <p className="text-sm text-gt-outline">3 notificações não lidas</p>
+              </div>
+            </div>
+            <ArrowRight className="w-5 h-5 text-gt-outline" />
+          </CardContent>
+        </Card>
       </Link>
     </div>
   </div>

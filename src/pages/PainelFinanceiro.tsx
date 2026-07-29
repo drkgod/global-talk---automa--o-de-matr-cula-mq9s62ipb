@@ -108,10 +108,10 @@ const PainelFinanceiro = () => {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gt-on-surface flex items-center gap-3">
           <Receipt className="w-8 h-8 text-gt-primary-container" />
-          Painel Financeiro
+          Financeiro
         </h1>
         <p className="text-gt-on-surface-variant mt-1">
-          Gerencie mensalidades e conciliação bancária
+          Mensalidades, cobranças e conciliação bancária
         </p>
       </div>
 

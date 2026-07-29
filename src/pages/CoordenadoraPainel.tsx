@@ -66,10 +66,10 @@ const CoordenadoraPainel = () => {
         <div>
           <h1 className="text-3xl font-bold text-gt-on-surface flex items-center gap-3">
             <Bell className="w-8 h-8 text-gt-primary-container" />
-            Painel da Coordenadora
+            Coordenadora
           </h1>
           <p className="text-gt-on-surface-variant mt-1">
-            Gerencie notificações e acompanhe as matrículas
+            Notificações e acompanhamento de matrículas
           </p>
         </div>
         {naoLidas.length > 0 && (

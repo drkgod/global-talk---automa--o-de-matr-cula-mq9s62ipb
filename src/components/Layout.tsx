@@ -8,34 +8,28 @@ export default function Layout() {
   const [menuOpen, setMenuOpen] = useState(false)
 
   const navItems = [
-    { href: '/', label: 'Início' },
-    { href: '/matricula', label: 'Nova Matrícula' },
+    { href: '/', label: 'Dashboard' },
+    { href: '/matricula', label: 'Matrícula' },
     { href: '/coordenadora', label: 'Coordenadora' },
     { href: '/financeiro', label: 'Financeiro' },
     { href: '/grade', label: 'Grade' },
     { href: '/inadimplencia', label: 'Inadimplência' },
-    { href: '/consolidacao', label: 'Consolidação' },
   ]
 
   return (
     <main className="flex flex-col min-h-screen bg-gt-surface">
-      {/* Top Navigation Bar */}
       <header className="sticky top-0 z-50 bg-white border-b border-gt-outline-variant">
         <div className="container mx-auto flex items-center justify-between h-16 px-6">
-          {/* Logo */}
           <Link to="/" className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-gt-primary-container flex items-center justify-center">
               <GraduationCap className="w-6 h-6 text-white" />
             </div>
             <div>
               <span className="text-lg font-bold text-gt-on-surface">Global Talk</span>
-              <span className="hidden sm:inline text-xs text-gt-outline ml-2">
-                Automação de Matrícula
-              </span>
+              <span className="hidden sm:inline text-xs text-gt-outline ml-2">Gestão Escolar</span>
             </div>
           </Link>
 
-          {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-1">
             {navItems.map((item) => (
               <Link
@@ -53,7 +47,6 @@ export default function Layout() {
             ))}
           </nav>
 
-          {/* Mobile Menu Button */}
           <button
             className="lg:hidden p-2 rounded-lg hover:bg-gt-surface-container transition-colors"
             onClick={() => setMenuOpen(!menuOpen)}
@@ -66,7 +59,6 @@ export default function Layout() {
           </button>
         </div>
 
-        {/* Mobile Navigation */}
         {menuOpen && (
           <nav className="lg:hidden border-t border-gt-outline-variant bg-white px-4 py-3 space-y-1 animate-fade-in">
             {navItems.map((item) => (
@@ -88,15 +80,13 @@ export default function Layout() {
         )}
       </header>
 
-      {/* Main Content */}
       <div className="flex-1">
         <Outlet />
       </div>
 
-      {/* Footer */}
-      <footer className="border-t border-gt-outline-variant bg-white py-6">
+      <footer className="border-t border-gt-outline-variant bg-white py-4">
         <div className="container mx-auto px-6 text-center">
-          <p className="text-sm text-gt-outline">© 2026 Global Talk — Automação de Matrícula</p>
+          <p className="text-xs text-gt-outline">© 2026 Global Talk</p>
         </div>
       </footer>
     </main>

@@ -76,9 +76,7 @@ const PainelInadimplencia = () => {
           <TrendingDown className="w-8 h-8 text-red-600" />
           Inadimplência
         </h1>
-        <p className="text-gt-on-surface-variant mt-1">
-          Acompanhe e gerencie casos de inadimplência
-        </p>
+        <p className="text-gt-on-surface-variant mt-1">Controle de atrasos e cobranças</p>
       </div>
 
       {/* Stats Cards */}

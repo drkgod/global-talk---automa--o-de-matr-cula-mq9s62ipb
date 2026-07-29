@@ -83,9 +83,7 @@ const PainelGrade = () => {
           <Calendar className="w-8 h-8 text-gt-primary-container" />
           Grade de Horários
         </h1>
-        <p className="text-gt-on-surface-variant mt-1">
-          Gerencie a grade semanal e alocação de professores
-        </p>
+        <p className="text-gt-on-surface-variant mt-1">Alocação semanal de professores e turmas</p>
       </div>
 
       {/* Stats Cards */}

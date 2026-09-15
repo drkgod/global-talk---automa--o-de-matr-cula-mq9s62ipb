@@ -1,131 +1,61 @@
-# Projeto Criado com o Skip
+# Global Talk · Automação de Matrícula
 
-Este projeto foi criado de ponta a ponta com o [Skip](https://goskip.dev).
+Sistema de ponta a ponta para transformar a matrícula de alunos em um fluxo rastreável, do primeiro cadastro à ativação.
 
-## 🚀 Stack Tecnológica
+## O que o produto cobre
 
-- **React 19** - Biblioteca JavaScript para construção de interfaces
-- **Vite** - Build tool extremamente rápida
-- **TypeScript** - Superset tipado do JavaScript
-- **Shadcn UI** - Componentes reutilizáveis e acessíveis
-- **Tailwind CSS** - Framework CSS utility-first
-- **React Router** - Roteamento para aplicações React
-- **React Hook Form** - Gerenciamento de formulários performático
-- **Zod** - Validação de schemas TypeScript-first
-- **Recharts** - Biblioteca de gráficos para React
+- formulário de matrícula com validação e salvamento de progresso;
+- prova de nivelamento e encaminhamento por turma;
+- consolidação e importação de dados;
+- geração e acompanhamento de contrato;
+- controle financeiro, PIX e inadimplência;
+- painéis operacionais para coordenação, grade e fases da jornada.
 
-## 📋 Pré-requisitos
+## Fluxo principal
 
-- Node.js 18+
-- npm
+```text
+Cadastro → Nivelamento → Turma → Importação → Contrato → Pagamento → Aluno ativo
+```
 
-## 🔧 Instalação
+## Arquitetura
+
+- **Frontend:** React 19, TypeScript, Vite e Tailwind CSS;
+- **Componentes:** shadcn/ui e Radix UI;
+- **Estado e validação:** React Hook Form e Zod;
+- **Backend:** PocketBase via Skip Cloud;
+- **Qualidade:** Oxlint e Oxfmt.
+
+## Executar localmente
 
 ```bash
-npm install
+pnpm install
+cp .env.example .env
+pnpm dev
 ```
 
-## 💻 Scripts Disponíveis
+Defina `VITE_POCKETBASE_URL` no arquivo `.env` com a URL do seu ambiente.
 
-### Desenvolvimento
+## Comandos úteis
 
 ```bash
-# Iniciar servidor de desenvolvimento
-npm start
-# ou
-npm run dev
+pnpm dev       # desenvolvimento
+pnpm build     # build de produção
+pnpm lint      # análise estática
+pnpm format    # formatação
+pnpm preview   # preview do build
 ```
 
-Abre a aplicação em modo de desenvolvimento em [http://localhost:5173](http://localhost:5173).
+## Estrutura relevante
 
-### Build
-
-```bash
-# Build para produção
-npm run build
-
-# Build para desenvolvimento
-npm run build:dev
+```text
+src/pages/MatriculaWizard.tsx       jornada de matrícula
+src/pages/CoordenadoraPainel.tsx    operação da coordenação
+src/pages/PainelFinanceiro.tsx      pagamentos e inadimplência
+src/pages/PainelGrade.tsx           turmas e grade
+src/pages/PainelFases.tsx           progresso da jornada
+pocketbase/                         dados e regras do backend
 ```
 
-Gera os arquivos otimizados para produção na pasta `dist/`.
+## Status
 
-### Preview
-
-```bash
-# Visualizar build de produção localmente
-npm run preview
-```
-
-Permite visualizar a build de produção localmente antes do deploy.
-
-### Linting e Formatação
-
-```bash
-# Executar linter
-npm run lint
-
-# Executar linter e corrigir problemas automaticamente
-npm run lint:fix
-
-# Formatar código com Oxfmt
-npm run format
-```
-
-## 📁 Estrutura do Projeto
-
-```
-.
-├── src/              # Código fonte da aplicação
-├── public/           # Arquivos estáticos
-├── dist/             # Build de produção (gerado)
-├── node_modules/     # Dependências (gerado)
-└── package.json      # Configurações e dependências do projeto
-```
-
-## 🎨 Componentes UI
-
-Este template inclui uma biblioteca completa de componentes Shadcn UI baseados em Radix UI:
-
-- Accordion
-- Alert Dialog
-- Avatar
-- Button
-- Checkbox
-- Dialog
-- Dropdown Menu
-- Form
-- Input
-- Label
-- Select
-- Switch
-- Tabs
-- Toast
-- Tooltip
-- E muito mais...
-
-## 📝 Ferramentas de Qualidade de Código
-
-- **TypeScript**: Tipagem estática
-- **Oxlint**: Linter extremamente rápido
-- **Oxfmt**: Formatação automática de código
-
-## 🔄 Workflow de Desenvolvimento
-
-1. Instale as dependências: `npm install`
-2. Inicie o servidor de desenvolvimento: `npm start`
-3. Faça suas alterações
-4. Verifique o código: `npm run lint`
-5. Formate o código: `npm run format`
-6. Crie a build: `npm run build`
-7. Visualize a build: `npm run preview`
-
-## 📦 Build e Deploy
-
-Para criar uma build otimizada para produção:
-
-```bash
-npm run build
-```
-
-Os arquivos otimizados serão gerados na pasta `dist/` e estarão prontos para deploy.
+Projeto de produto construído no Skip. Para uso fora do ambiente original, configure uma instância compatível de PocketBase e revise as regras de acesso antes de publicar.
